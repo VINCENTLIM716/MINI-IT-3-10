@@ -9,9 +9,11 @@
     <header>
         <h1>🌱 Habit Traveler</h1>
         <nav>
-            <a href="#">Home</a>
-            <a href="#">Habits</a>
-            <a href="#">Stats</a>
+            <ul>
+                <li><a href="{{ url_for('index') }}">Home</a></li>
+                <li><a href="#">Habits</a></li>
+                <li><a href="{{ url_for('register') }}">Register</a></li>
+            </ul>
         </nav>
     </header>
 
