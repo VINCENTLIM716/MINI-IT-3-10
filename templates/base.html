@@ -10,17 +10,18 @@
         <h1>🌱 Habit Traveler</h1>
         <nav>
             <ul>
-                <li><a href="#">Home</a></li>
+                <li><a href="{{ url_for('index') }}">Home</a></li>
                 <li><a href="#">Habits</a></li>
-                <li><a href="#">Stats</a></li>
+                <li><a href="{{ url_for('register') }}">Register</a></li>
             </ul>
         </nav>
-        
     </header>
 
     <main>
+        {% block content %}
         <h2>Welcome, adventurer!</h2>
         <p>Start building your good habits and grow your journey!</p>
+        {% endblock %}
     </main>
 
     <footer>
