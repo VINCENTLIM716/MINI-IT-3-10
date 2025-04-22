@@ -11,7 +11,7 @@
         <nav>
             <ul>
                 <li><a href="{{ url_for('index') }}">Home</a></li>
-                <li><a href="#">Habits</a></li>
+                <li><a href="{{ url_for('habits') }}">Habits</a></li>
                 <li><a href="{{ url_for('stats') }}">Stats</a></li>
                 
                 {% if session.get('user_id') %}
