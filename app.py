@@ -75,6 +75,29 @@ def logout():
     return redirect(url_for('index'))
 
 
+@app.route('/habits')
+def habits():
+    if 'user_id' not in session:
+        return redirect(url_for('login')) 
+
+    user_id = session['user_id']
+    username = session.get('username')
+
+    user_habits = Habit.query.filter_by(user_id=user_id).all()
+
+    habits_with_data = []
+    for habit in user_habits:
+        completions = HabitCompletion.query.filter_by(habit_id=habit.id, user_id=user_id).count()
+        habits_with_data.append({
+            'id': habit.id,
+            'name': habit.name,
+            'streak': completions, 
+            'frequency': "Daily"    
+        })
+
+    return render_template('habit.html', habits=habits_with_data, username=username)
+
+
 @app.route('/stats')
 def stats():
     if 'user_id' not in session:
