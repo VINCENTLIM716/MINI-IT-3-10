@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1 class="stats-title">📊 Habit Stats</h1>
+    <div class="stats-box">
+        <p><strong>Total Habits:</strong> {{ stats.total_habits }}</p>
+        <p><strong>Completed Habits:</strong> {{ stats.completed_habits }}</p>
+        <p><strong>Completion Rate:</strong> {{ stats.completion_rate }}%</p>
+
+        {% if stats.total_habits > 0 %}
+            <p><strong>Keep going! You're on your way to achieving your goals!</strong></p>
+        {% else %}
+            <p><strong>It looks like you don't have any habits yet. Start creating some!</strong></p>
+        {% endif %}
+    </div>
+{% endblock %}

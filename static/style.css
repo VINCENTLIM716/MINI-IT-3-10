@@ -34,6 +34,19 @@ nav a {
     transition: all 0.3s ease;
 }
 
+nav ul {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+}
+
+nav li {
+    margin: 0 15px;
+}
+
 nav a:hover {
     color: #ffe066;
     text-decoration: underline;
@@ -77,6 +90,43 @@ ul li {
     font-size: 1.1em;
     color: #34495e;
 }
+
+.stats-title {
+    font-size: 2.2em;
+    color: #34495e;
+    margin-bottom: 20px;
+}
+
+.stats-box {
+    background: #ffffff;
+    border-radius: 15px;
+    padding: 30px;
+    max-width: 400px;
+    margin: 20px auto;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+    text-align: left;
+}
+
+.stats-box p {
+    font-size: 1.1em;
+    margin: 10px 0;
+    color: #2f3640;
+}
+
+.progress-bar-container {
+    background: #e0e0e0;
+    border-radius: 10px;
+    height: 20px;
+    margin-top: 15px;
+}
+
+.progress-bar {
+    background: linear-gradient(to right, #57bc90, #77c9d4);
+    height: 100%;
+    border-radius: 10px;
+    transition: width 0.5s ease;
+}
+
 
 a {
     color: #3498db;
