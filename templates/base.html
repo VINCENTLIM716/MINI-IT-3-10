@@ -12,25 +12,41 @@
             <ul>
                 <li><a href="{{ url_for('index') }}">Home</a></li>
                 <li><a href="#">Habits</a></li>
-                {% if session.get('username') %}
-            <li><a href="{{ url_for('logout') }}">Logout ({{ session['username'] }})</a></li>
-        {% else %}
-            <li><a href="{{ url_for('login') }}">Login</a></li>
+                <li><a href="{{ url_for('stats') }}">Stats</a></li>
+                
+                {% if session.get('user_id') %}
+                <li><a href="#">Welcome, {{ session['username'] }}</a></li>
+                <li><a href="{{ url_for('logout') }}">Logout</a></li>
+            {% else %}
+                <li><a href="{{ url_for('login') }}">Login</a></li>
                 <li><a href="{{ url_for('register') }}">Register</a></li>
-                {% endif %}
-            </ul>
+            {% endif %}
+         </ul>
         </nav>
     </header>
 
     <main>
         {% block content %}
-        <h2>Welcome, adventurer!</h2>
-        <p>Start building your good habits and grow your journey!</p>
+        <section>
+            <h2>Welcome, adventurer!</h2>
+            <p>You're about to begin a journey to become the best version of yourself — one habit at a time.</p>
+            <p><strong>Habit Traveler</strong> is a gamified habit tracker that helps you build positive routines and stay motivated through rewards, progress tracking, and personal growth.</p>
+        </section>
+
+        <section>
+            <h3>✨ What You Can Do:</h3>
+            <ul>
+                <li>📝 Create and manage your daily habits</li>
+                <li>⏰ Set reminders to stay consistent</li>
+                <li>📊 Track your progress with fun stats</li>
+                <li>🏅 Earn points, level up, and unlock rewards</li>
+            </ul>
+        </section>
         {% endblock %}
     </main>
 
     <footer>
-        <p>&copy; 2025 Habit Traveler</p>
+        <p>&copy; 2025 Habit Traveler. Stay consistent, and let your character grow with you!</p>
     </footer>
 </body>
 </html>

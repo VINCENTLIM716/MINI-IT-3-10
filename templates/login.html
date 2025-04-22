@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% block content %}
-<h2>Create Your Account</h2>
+<h2>Login</h2>
 
 {% with messages = get_flashed_messages() %}
   {% if messages %}
@@ -13,12 +13,12 @@
 {% endwith %}
 
 <form method="POST">
-    <label>Username:</label><br>
+    <label for="username">Username:</label><br>
     <input name="username" required><br><br>
 
-    <label>Password:</label><br>
+    <label for="password">Password:</label><br>
     <input name="password" type="password" required><br><br>
 
-    <input type="submit" value="Register">
+    <input type="submit" value="Login">
 </form>
 {% endblock %}
