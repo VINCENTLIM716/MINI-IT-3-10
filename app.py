@@ -105,12 +105,22 @@ def stats():
     user_id = session['user_id']
     today = date.today()
 
-    total_habits = Habit.query.filter_by(user_id=user_id).count()
 
-    completed_today = db.session.query(HabitCompletion.habit_id).filter_by(user_id=user_id, date=today).distinct().count()
+    current_habits = db.session.query(Habit.id).filter_by(user_id=user_id).subquery()
 
-    completion_rate = 0
-    if total_habits > 0:
+    total_habits = db.session.query(Habit).filter_by(user_id=user_id).count()
+
+    completed_today = db.session.query(HabitCompletion.habit_id)\
+        .filter(
+            HabitCompletion.user_id == user_id,
+            HabitCompletion.date == today,
+            HabitCompletion.habit_id.in_(current_habits)
+        )\
+        .distinct().count()
+
+    if total_habits == 0:
+        completion_rate = 0
+    else:
         completion_rate = round((completed_today / total_habits) * 100, 1)
 
     stats = {
@@ -161,7 +171,6 @@ def complete_habit(habit_id):
         db.session.add(completion)
         db.session.commit()
         flash('🎉 Habit marked as completed!')
-
     return redirect(url_for('habits'))
 
 

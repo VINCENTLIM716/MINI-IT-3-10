@@ -3,9 +3,10 @@
 {% block content %}
     <h1 class="stats-title">📊 Habit Stats</h1>
     <div class="stats-box">
-        <p><strong>Total Habits:</strong> {{ stats.total_habits }}</p>
-        <p><strong>Completed Habits:</strong> {{ stats.completed_habits }}</p>
-        <p><strong>Completion Rate:</strong> {{ stats.completion_rate }}%</p>
+       <p><strong>Total Habits:</strong> {{ stats.total_habits }}</p>
+       <p>Completed Today: {{ stats.completed_habits }}</p>
+       <p>Completion Rate: {{ stats.completion_rate }}%</p>
+
 
         <div style="margin: 15px 0;">
             <div style="background-color: #ddd; border-radius: 10px; height: 20px;">
