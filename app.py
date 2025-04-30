@@ -118,31 +118,23 @@ def stats():
     user_id = session['user_id']
     today = date.today()
 
+    total_habits = Habit.query.filter_by(user_id=user_id).count()
+    completed_today = HabitCompletion.query.filter_by(user_id=user_id, date=today).count()
 
-    current_habits = db.session.query(Habit.id).filter_by(user_id=user_id).subquery()
-
-    total_habits = db.session.query(Habit).filter_by(user_id=user_id).count()
-
-    completed_today = db.session.query(HabitCompletion.habit_id)\
-        .filter(
-            HabitCompletion.user_id == user_id,
-            HabitCompletion.date == today,
-            HabitCompletion.habit_id.in_(current_habits)
-        )\
-        .distinct().count()
-
-    if total_habits == 0:
-        completion_rate = 0
-    else:
-        completion_rate = round((completed_today / total_habits) * 100, 1)
+    # Prepare chart data
+    chart_data = {
+        'labels': ['Completed Today', 'Remaining'],
+        'data': [completed_today, max(total_habits - completed_today, 0)]
+    }
 
     stats = {
         'total_habits': total_habits,
         'completed_habits': completed_today,
-        'completion_rate': completion_rate
+        'completion_rate': round((completed_today / total_habits) * 100, 1) if total_habits else 0
     }
 
-    return render_template('stats.html', stats=stats)
+    return render_template('stats.html', stats=stats, chart_data=chart_data)
+
 
 
 @app.route('/add_habit', methods=['GET', 'POST'])
