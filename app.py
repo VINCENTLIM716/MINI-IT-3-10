@@ -121,7 +121,6 @@ def stats():
     total_habits = Habit.query.filter_by(user_id=user_id).count()
     completed_today = HabitCompletion.query.filter_by(user_id=user_id, date=today).count()
 
-    # Prepare chart data
     chart_data = {
         'labels': ['Completed Today', 'Remaining'],
         'data': [completed_today, max(total_habits - completed_today, 0)]
@@ -134,7 +133,6 @@ def stats():
     }
 
     return render_template('stats.html', stats=stats, chart_data=chart_data)
-
 
 
 @app.route('/add_habit', methods=['GET', 'POST'])
