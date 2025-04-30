@@ -97,24 +97,99 @@ def habits():
 
     return render_template('habit.html', habits=habits_with_data, username=username)
 
-
 @app.route('/stats')
 def stats():
     if 'user_id' not in session:
         return redirect(url_for('login'))
 
     user_id = session['user_id']
-    total_habits = Habit.query.filter_by(user_id=user_id).count()
-    completed = HabitCompletion.query.filter_by(user_id=user_id).count()
-    completion_rate = round((completed / total_habits) * 100, 1) if total_habits > 0 else 0
+    today = date.today()
+
+
+    current_habits = db.session.query(Habit.id).filter_by(user_id=user_id).subquery()
+
+    total_habits = db.session.query(Habit).filter_by(user_id=user_id).count()
+
+    completed_today = db.session.query(HabitCompletion.habit_id)\
+        .filter(
+            HabitCompletion.user_id == user_id,
+            HabitCompletion.date == today,
+            HabitCompletion.habit_id.in_(current_habits)
+        )\
+        .distinct().count()
+
+    if total_habits == 0:
+        completion_rate = 0
+    else:
+        completion_rate = round((completed_today / total_habits) * 100, 1)
 
     stats = {
         'total_habits': total_habits,
-        'completed_habits': completed,
+        'completed_habits': completed_today,
         'completion_rate': completion_rate
     }
 
     return render_template('stats.html', stats=stats)
+
+
+@app.route('/add_habit', methods=['GET', 'POST'])
+def add_habit():
+    if 'user_id' not in session:
+        return redirect(url_for('login')) 
+
+    if request.method == 'POST':
+        habit_name = request.form['habit_name']
+        user_id = session['user_id']
+
+        new_habit = Habit(name=habit_name, user_id=user_id)
+        db.session.add(new_habit)
+        db.session.commit()
+
+        flash('Habit added successfully!')
+        return redirect(url_for('habits'))
+
+    return render_template('add_habit.html')
+
+@app.route('/complete_habit/<int:habit_id>', methods=['POST'])
+def complete_habit(habit_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    user_id = session['user_id']
+    today = date.today()
+
+    existing_completion = HabitCompletion.query.filter_by(
+        habit_id=habit_id,
+        user_id=user_id,
+        date=today
+    ).first()
+
+    if existing_completion:
+        flash('✅ You already completed this habit today!')
+    else:
+        completion = HabitCompletion(habit_id=habit_id, user_id=user_id, date=today)
+        db.session.add(completion)
+        db.session.commit()
+        flash('🎉 Habit marked as completed!')
+    return redirect(url_for('habits'))
+
+
+@app.route('/delete_habit/<int:habit_id>', methods=['POST'])
+def delete_habit(habit_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login')) 
+    
+    user_id = session['user_id']
+    habit = Habit.query.filter_by(id=habit_id, user_id=user_id).first()
+    
+    if habit:
+        db.session.delete(habit)  
+        db.session.commit()  
+        flash('Habit deleted successfully!')  
+    else:
+        flash('Habit not found or unauthorized action.')  
+    
+    return redirect(url_for('habits')) 
 
 with app.app_context():
     db.create_all()

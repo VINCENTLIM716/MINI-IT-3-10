@@ -122,10 +122,35 @@ a:hover {
     text-decoration: underline;
 }
 
+button i {
+    font-size: 1.5rem;  
+    transition: transform 0.2s ease-in-out;  
+}
+
+button:hover i {
+    transform: scale(1.2);  
+}
+
+.habits-container {
+    display: flex;
+    flex-wrap: wrap; 
+    gap: 20px;        
+    justify-content: center; 
+}
+
+.habit-card {
+    width: 250px;  
+    padding: 20px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
 footer {
     background: #2d3436;
     color: white;
     text-align: center;
     padding: 15px 10px;
-    font-size: 0.9em;
+    font-size: 0.9em;
 }
