@@ -16,6 +16,7 @@ class User(db.Model):
     xp = db.Column(db.Integer, default=0)
     level = db.Column(db.Integer, default=1)
 
+
 class Habit(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
@@ -183,7 +184,7 @@ def complete_habit(habit_id):
         db.session.add(completion)
 
         user = User.query.get(user_id)
-        xp_earned = 20  # or any rule you want
+        xp_earned = 30
         leveled_up = add_xp_and_check_level(user, xp_earned)
 
         db.session.commit()

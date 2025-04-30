@@ -4,20 +4,28 @@
 
     <h2 class="text-4xl font-extrabold mb-6 text-center text-green-700">🌱 Habit Dashboard</h2>
 
-    <!-- 🎮 XP & Level Section -->
-    <!-- 🎮 XP & Level Section -->
-<div class="bg-white p-4 rounded-lg shadow mb-10 text-center border border-gray-200">
-    <p class="text-lg text-gray-700 font-medium">
-        👤 <strong>{{ username }}</strong> | 🧠 Level: <strong>{{ user.level }}</strong> | ⚡ XP: <strong>{{ user.xp }}</strong>
-    </p>
-    <div class="mt-3 h-4 bg-gray-200 rounded-full overflow-hidden">
-        <div class="h-full bg-green-500 transition-all duration-300 {{ progress_class }}"></div>
+    <div class="bg-white p-4 rounded-lg shadow mb-10 text-center border border-gray-200">
+        <p class="text-lg text-gray-700 font-medium">
+            👤 <strong>{{ username }}</strong> | 🧠 Level: <strong>{{ user.level }}</strong> | ⚡ XP: <strong>{{ user.xp }}</strong>
+        </p>
+        <div class="mt-3 h-4 bg-gray-200 rounded-full overflow-hidden">
+            <div class="h-full bg-green-500 transition-all duration-300 {{ progress_class }}"></div>
+        </div>
+        <p class="text-sm text-gray-600 mt-1">XP to next level: {{ xp_needed - user.xp }} XP</p>
     </div>
-    <p class="text-sm text-gray-600 mt-1">XP to next level: {{ xp_needed - user.xp }} XP</p>
-</div>
 
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} text-center p-4 mb-4 rounded bg-green-100 text-green-800 fade-in-out">
+                        <strong>{{ message }}</strong>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
 
-    <!-- 🧠 Suggested Habits -->
     <section class="mb-12 bg-indigo-50 p-6 rounded-xl border-l-4 border-indigo-400 shadow-md">
         <h3 class="text-2xl font-bold text-indigo-800 mb-3">💡 Suggested Habits</h3>
         <ul class="list-disc pl-6 text-gray-700 space-y-1 text-lg">
@@ -29,7 +37,6 @@
         </ul>
     </section>
 
-    <!-- 📋 User Habits -->
     <section class="mb-10">
         <h3 class="text-xl font-semibold text-gray-800 mb-4">🗂 Your Current Habits</h3>
         
@@ -66,7 +73,6 @@
         {% endif %}
     </section>    
     
-    <!-- ➕ Add New Habit Button -->
     <div class="text-center mt-10">
         <a 
             href="{{ url_for('add_habit') }}"
