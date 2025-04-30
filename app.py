@@ -13,6 +13,8 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(150), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
+    xp = db.Column(db.Integer, default=0)
+    level = db.Column(db.Integer, default=1)
 
 class Habit(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -78,10 +80,15 @@ def logout():
 @app.route('/habits')
 def habits():
     if 'user_id' not in session:
-        return redirect(url_for('login')) 
+        return redirect(url_for('login'))
 
     user_id = session['user_id']
     username = session.get('username')
+    user = User.query.get(user_id)
+
+    xp_needed = 100 + (user.level - 1) * 50
+    progress_percent = int((user.xp / xp_needed) * 100) if xp_needed > 0 else 0
+    progress_class = f"w-[{progress_percent}%]"
 
     user_habits = Habit.query.filter_by(user_id=user_id).all()
 
@@ -91,11 +98,16 @@ def habits():
         habits_with_data.append({
             'id': habit.id,
             'name': habit.name,
-            'streak': completions, 
-            'frequency': "Daily"    
+            'streak': completions,
+            'frequency': "Daily"
         })
 
-    return render_template('habit.html', habits=habits_with_data, username=username)
+    return render_template('habit.html',
+                           habits=habits_with_data,
+                           username=username,
+                           user=user,
+                           xp_needed=xp_needed,
+                           progress_class=progress_class)
 
 @app.route('/stats')
 def stats():
@@ -169,10 +181,18 @@ def complete_habit(habit_id):
     else:
         completion = HabitCompletion(habit_id=habit_id, user_id=user_id, date=today)
         db.session.add(completion)
-        db.session.commit()
-        flash('🎉 Habit marked as completed!')
-    return redirect(url_for('habits'))
 
+        user = User.query.get(user_id)
+        xp_earned = 20  # or any rule you want
+        leveled_up = add_xp_and_check_level(user, xp_earned)
+
+        db.session.commit()
+
+        flash(f'🎉 Habit completed! +{xp_earned} XP earned.')
+        if leveled_up:
+            flash(f'🚀 You leveled up to Level {user.level}!')
+
+    return redirect(url_for('habits'))
 
 @app.route('/delete_habit/<int:habit_id>', methods=['POST'])
 def delete_habit(habit_id):
@@ -190,6 +210,20 @@ def delete_habit(habit_id):
         flash('Habit not found or unauthorized action.')  
     
     return redirect(url_for('habits')) 
+
+def xp_for_next_level(level):
+    return 100 + (level - 1) * 50
+
+def add_xp_and_check_level(user, amount):
+    user.xp += amount
+    leveled_up = False
+
+    while user.xp >= xp_for_next_level(user.level):
+        user.xp -= xp_for_next_level(user.level)
+        user.level += 1
+        leveled_up = True
+
+    return leveled_up
 
 with app.app_context():
     db.create_all()
