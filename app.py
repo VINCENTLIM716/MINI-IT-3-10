@@ -2,12 +2,21 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import date,datetime
+from flask_mail import Mail, Message
+import random
 
 app = Flask(__name__)
 app.secret_key = 'secret123'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
 db = SQLAlchemy(app)
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'  
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = 'kerksiauer@gmail.com'  
+app.config['MAIL_PASSWORD'] = 'rhss uwam sogx zzfg'  
+app.config['MAIL_DEFAULT_SENDER'] = 'kerksiauer@gmail.com'  
 
+mail = Mail(app)
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -49,15 +58,44 @@ def register():
             flash("Email already registered.")
             return redirect(url_for('register'))
 
+        otp = random.randint(100000, 999999)
+
+        msg = Message('Your OTP Code', recipients=[email])
+        msg.body = f'Your OTP code is: {otp}'
+        try:
+            mail.send(msg)
+            flash("OTP sent to your email.")
+        except Exception as e:
+            flash(f"Error sending OTP: {str(e)}")
+            return redirect(url_for('register'))
+
+        session['otp'] = otp
+
         new_user = User(email=email, password=hashed)
         db.session.add(new_user)
         db.session.commit()
 
         session['user_id'] = new_user.id
         session['email'] = new_user.email
-        return redirect(url_for('index'))
+
+        return redirect(url_for('verify_otp'))
 
     return render_template('register.html')
+
+@app.route('/verify_otp', methods=['GET', 'POST'])
+def verify_otp():
+    if request.method == 'POST':
+        entered_otp = request.form['otp']
+
+        if int(entered_otp) == session.get('otp'):
+            flash("OTP verified successfully!")
+            return redirect(url_for('index'))
+        else:
+            flash("Invalid OTP. Please try again.")
+            return redirect(url_for('verify_otp'))
+
+    return render_template('verify_otp.html')
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -76,8 +114,6 @@ def login():
             return redirect(url_for('login'))
 
     return render_template('login.html')
-
-
 
 @app.route('/logout')
 def logout():
@@ -271,13 +307,11 @@ def edit_profile():
             birthday = datetime.strptime(birthday_str, '%Y-%m-%d').date()
             age = int(age)
 
-            # Check if new username is taken (and is not the current user's)
             if username != user.username:
                 if User.query.filter_by(username=username).first():
                     flash("Username already taken.")
                     return redirect(url_for('edit_profile'))
 
-            # Save all updates
             user.username = username
             user.birthday = birthday
             user.age = age
