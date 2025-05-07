@@ -29,8 +29,6 @@ class User(db.Model):
     age = db.Column(db.Integer, nullable=True)  
     description = db.Column(db.String(500), nullable=True)  
 
-
-
 class Habit(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
