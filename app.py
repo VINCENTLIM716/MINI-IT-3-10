@@ -11,7 +11,8 @@ db = SQLAlchemy(app)
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(150), unique=True, nullable=False)
+    email = db.Column(db.String(150), unique=True, nullable=False)
+    username = db.Column(db.String(150), unique=True, nullable=True)
     password = db.Column(db.String(200), nullable=False)
     xp = db.Column(db.Integer, default=0)
     level = db.Column(db.Integer, default=1)
@@ -39,41 +40,43 @@ def index():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        username = request.form['username']
+        email = request.form['email']
         password = request.form['password']
         hashed = generate_password_hash(password)
 
-        existing_user = User.query.filter_by(username=username).first()
+        existing_user = User.query.filter_by(email=email).first()
         if existing_user:
-            flash("Username already exists.")
+            flash("Email already registered.")
             return redirect(url_for('register'))
 
-        new_user = User(username=username, password=hashed)
+        new_user = User(email=email, password=hashed)
         db.session.add(new_user)
         db.session.commit()
-        
+
         session['user_id'] = new_user.id
-        session['username'] = new_user.username
+        session['email'] = new_user.email
         return redirect(url_for('index'))
-    
+
     return render_template('register.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        username = request.form['username']
+        email = request.form['email']
         password = request.form['password']
-        user = User.query.filter_by(username=username).first()
+
+        user = User.query.filter_by(email=email).first()
 
         if user and check_password_hash(user.password, password):
             session['user_id'] = user.id
-            session['username'] = user.username
+            session['email'] = user.email
             return redirect(url_for('index'))
         else:
-            flash('Invalid username or password.')
+            flash('Invalid email or password.')
             return redirect(url_for('login'))
 
     return render_template('login.html')
+
 
 
 @app.route('/logout')
@@ -259,22 +262,31 @@ def edit_profile():
     user = User.query.get(user_id)
 
     if request.method == 'POST':
+        username = request.form['username']
         birthday_str = request.form['birthday']
         age = request.form['age']
         description = request.form['description']
 
         try:
             birthday = datetime.strptime(birthday_str, '%Y-%m-%d').date()
-
             age = int(age)
 
+            # Check if new username is taken (and is not the current user's)
+            if username != user.username:
+                if User.query.filter_by(username=username).first():
+                    flash("Username already taken.")
+                    return redirect(url_for('edit_profile'))
+
+            # Save all updates
+            user.username = username
             user.birthday = birthday
             user.age = age
             user.description = description
 
             db.session.commit()
             flash("Profile updated successfully!")
-            return redirect(url_for('profile'))  
+            return redirect(url_for('profile'))
+
         except ValueError:
             flash("Invalid input. Please make sure all fields are correct.")
             return redirect(url_for('edit_profile'))
