@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import date
+from datetime import date,datetime
 
 app = Flask(__name__)
 app.secret_key = 'secret123'
@@ -15,6 +15,10 @@ class User(db.Model):
     password = db.Column(db.String(200), nullable=False)
     xp = db.Column(db.Integer, default=0)
     level = db.Column(db.Integer, default=1)
+    birthday = db.Column(db.Date, nullable=True)  # Birthday field
+    age = db.Column(db.Integer, nullable=True)  # Age field
+    description = db.Column(db.String(500), nullable=True)  # Description field
+
 
 
 class Habit(db.Model):
@@ -215,6 +219,67 @@ def add_xp_and_check_level(user, amount):
         leveled_up = True
 
     return leveled_up
+
+@app.route('/profile')
+def profile():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    user_id = session['user_id']
+    user = User.query.get(user_id)
+
+    if user:
+        total_habits = Habit.query.filter_by(user_id=user_id).count()
+
+        habit_completions = HabitCompletion.query.filter_by(user_id=user_id).all()
+        streaks = {}  
+        for completion in habit_completions:
+            habit_id = completion.habit_id
+            if habit_id not in streaks:
+                streaks[habit_id] = 1 
+            else:
+                streaks[habit_id] += 1
+
+        max_streak = max(streaks.values(), default=0)
+
+        badges = ['Habit Master', 'Streak King', 'Goal Crusher'] 
+
+        return render_template('profile.html', user=user, total_habits=total_habits, max_streak=max_streak, badges=badges)
+    else:
+        flash("User not found.")
+        return redirect(url_for('index'))
+
+
+@app.route('/edit_profile', methods=['GET', 'POST'])
+def edit_profile():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    user_id = session['user_id']
+    user = User.query.get(user_id)
+
+    if request.method == 'POST':
+        birthday_str = request.form['birthday']
+        age = request.form['age']
+        description = request.form['description']
+
+        try:
+            birthday = datetime.strptime(birthday_str, '%Y-%m-%d').date()
+
+            age = int(age)
+
+            user.birthday = birthday
+            user.age = age
+            user.description = description
+
+            db.session.commit()
+            flash("Profile updated successfully!")
+            return redirect(url_for('profile'))  
+        except ValueError:
+            flash("Invalid input. Please make sure all fields are correct.")
+            return redirect(url_for('edit_profile'))
+
+    return render_template('edit_profile.html', user=user)
 
 with app.app_context():
     db.create_all()
