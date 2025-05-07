@@ -1,24 +1,61 @@
 {% extends 'base.html' %}
 
 {% block content %}
-    <h1 class="stats-title">📊 Habit Stats</h1>
-    <div class="stats-box">
-       <p><strong>Total Habits:</strong> {{ stats.total_habits }}</p>
-       <p>Completed Today: {{ stats.completed_habits }}</p>
-       <p>Completion Rate: {{ stats.completion_rate }}%</p>
+<h1 class="stats-title">📊 Habit Stats</h1>
 
+<div class="stats-box"
+     data-labels="{{ chart_data.labels | join(',') }}"
+     data-values="{{ chart_data.data | join(',') }}">
 
-        <div style="margin: 15px 0;">
-            <div style="background-color: #ddd; border-radius: 10px; height: 20px;">
-                    {{ stats.completion_rate }}%
-                </div>
-            </div>
+    <p><strong>Total Habits:</strong> {{ stats.total_habits }}</p>
+    <p><strong>Completed Today:</strong> {{ stats.completed_habits }}</p>
+    <p><strong>Completion Rate:</strong> {{ stats.completion_rate }}%</p>
+
+    <div style="margin: 15px 0;">
+        <div style="background-color: #ddd; border-radius: 10px; height: 20px; overflow: hidden;">
+            <div style="background-color: #4CAF50; width: '{{ stats.completion_rate }}%'; height: 100%;"></div>
         </div>
-
-        {% if stats.total_habits > 0 %}
-            <p><strong>Keep going! You're on your way to achieving your goals! 💪</strong></p>
-        {% else %}
-            <p><strong>It looks like you don't have any habits yet. Start creating some!</strong></p>
-        {% endif %}
     </div>
-{% endblock %}
+
+    {% if stats.total_habits > 0 %}
+        <p><strong>Keep going! You're on your way to achieving your goals! 💪</strong></p>
+    {% else %}
+        <p><strong>It looks like you don't have any habits yet. Start creating some!</strong></p>
+    {% endif %}
+
+    <div style="margin-top: 30px;">
+        <canvas id="habitChart" width="400" height="400"></canvas>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const statsBox = document.querySelector('.stats-box');
+    const rawLabels = statsBox.getAttribute('data-labels');
+    const rawValues = statsBox.getAttribute('data-values');
+
+    const labels = rawLabels.split(',');
+    const data = rawValues.split(',').map(Number); 
+
+    const ctx = document.getElementById('habitChart').getContext('2d');
+    const habitChart = new Chart(ctx, {
+        type: 'pie', 
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Today\'s Habits',
+                data: data,
+                backgroundColor: ['#4CAF50', '#f44336'], 
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

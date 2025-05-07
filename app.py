@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import date
+from datetime import date,datetime
 
 app = Flask(__name__)
 app.secret_key = 'secret123'
@@ -11,8 +11,16 @@ db = SQLAlchemy(app)
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(150), unique=True, nullable=False)
+    email = db.Column(db.String(150), unique=True, nullable=False)
+    username = db.Column(db.String(150), unique=True, nullable=True)
     password = db.Column(db.String(200), nullable=False)
+    xp = db.Column(db.Integer, default=0)
+    level = db.Column(db.Integer, default=1)
+    birthday = db.Column(db.Date, nullable=True)  
+    age = db.Column(db.Integer, nullable=True)  
+    description = db.Column(db.String(500), nullable=True)  
+
+
 
 class Habit(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -32,41 +40,43 @@ def index():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        username = request.form['username']
+        email = request.form['email']
         password = request.form['password']
         hashed = generate_password_hash(password)
 
-        existing_user = User.query.filter_by(username=username).first()
+        existing_user = User.query.filter_by(email=email).first()
         if existing_user:
-            flash("Username already exists.")
+            flash("Email already registered.")
             return redirect(url_for('register'))
 
-        new_user = User(username=username, password=hashed)
+        new_user = User(email=email, password=hashed)
         db.session.add(new_user)
         db.session.commit()
-        
+
         session['user_id'] = new_user.id
-        session['username'] = new_user.username
+        session['email'] = new_user.email
         return redirect(url_for('index'))
-    
+
     return render_template('register.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        username = request.form['username']
+        email = request.form['email']
         password = request.form['password']
-        user = User.query.filter_by(username=username).first()
+
+        user = User.query.filter_by(email=email).first()
 
         if user and check_password_hash(user.password, password):
             session['user_id'] = user.id
-            session['username'] = user.username
+            session['email'] = user.email
             return redirect(url_for('index'))
         else:
-            flash('Invalid username or password.')
+            flash('Invalid email or password.')
             return redirect(url_for('login'))
 
     return render_template('login.html')
+
 
 
 @app.route('/logout')
@@ -78,10 +88,15 @@ def logout():
 @app.route('/habits')
 def habits():
     if 'user_id' not in session:
-        return redirect(url_for('login')) 
+        return redirect(url_for('login'))
 
     user_id = session['user_id']
     username = session.get('username')
+    user = User.query.get(user_id)
+
+    xp_needed = 100 + (user.level - 1) * 50
+    progress_percent = int((user.xp / xp_needed) * 100) if xp_needed > 0 else 0
+    progress_class = f"w-[{progress_percent}%]"
 
     user_habits = Habit.query.filter_by(user_id=user_id).all()
 
@@ -91,11 +106,16 @@ def habits():
         habits_with_data.append({
             'id': habit.id,
             'name': habit.name,
-            'streak': completions, 
-            'frequency': "Daily"    
+            'streak': completions,
+            'frequency': "Daily"
         })
 
-    return render_template('habit.html', habits=habits_with_data, username=username)
+    return render_template('habit.html',
+                           habits=habits_with_data,
+                           username=username,
+                           user=user,
+                           xp_needed=xp_needed,
+                           progress_class=progress_class)
 
 @app.route('/stats')
 def stats():
@@ -105,31 +125,21 @@ def stats():
     user_id = session['user_id']
     today = date.today()
 
+    total_habits = Habit.query.filter_by(user_id=user_id).count()
+    completed_today = HabitCompletion.query.filter_by(user_id=user_id, date=today).count()
 
-    current_habits = db.session.query(Habit.id).filter_by(user_id=user_id).subquery()
-
-    total_habits = db.session.query(Habit).filter_by(user_id=user_id).count()
-
-    completed_today = db.session.query(HabitCompletion.habit_id)\
-        .filter(
-            HabitCompletion.user_id == user_id,
-            HabitCompletion.date == today,
-            HabitCompletion.habit_id.in_(current_habits)
-        )\
-        .distinct().count()
-
-    if total_habits == 0:
-        completion_rate = 0
-    else:
-        completion_rate = round((completed_today / total_habits) * 100, 1)
+    chart_data = {
+        'labels': ['Completed Today', 'Remaining'],
+        'data': [completed_today, max(total_habits - completed_today, 0)]
+    }
 
     stats = {
         'total_habits': total_habits,
         'completed_habits': completed_today,
-        'completion_rate': completion_rate
+        'completion_rate': round((completed_today / total_habits) * 100, 1) if total_habits else 0
     }
 
-    return render_template('stats.html', stats=stats)
+    return render_template('stats.html', stats=stats, chart_data=chart_data)
 
 
 @app.route('/add_habit', methods=['GET', 'POST'])
@@ -169,10 +179,18 @@ def complete_habit(habit_id):
     else:
         completion = HabitCompletion(habit_id=habit_id, user_id=user_id, date=today)
         db.session.add(completion)
-        db.session.commit()
-        flash('🎉 Habit marked as completed!')
-    return redirect(url_for('habits'))
 
+        user = User.query.get(user_id)
+        xp_earned = 30
+        leveled_up = add_xp_and_check_level(user, xp_earned)
+
+        db.session.commit()
+
+        flash(f'🎉 Habit completed! +{xp_earned} XP earned.')
+        if leveled_up:
+            flash(f'🚀 You leveled up to Level {user.level}!')
+
+    return redirect(url_for('habits'))
 
 @app.route('/delete_habit/<int:habit_id>', methods=['POST'])
 def delete_habit(habit_id):
@@ -190,6 +208,90 @@ def delete_habit(habit_id):
         flash('Habit not found or unauthorized action.')  
     
     return redirect(url_for('habits')) 
+
+def xp_for_next_level(level):
+    return 100 + (level - 1) * 50
+
+def add_xp_and_check_level(user, amount):
+    user.xp += amount
+    leveled_up = False
+
+    while user.xp >= xp_for_next_level(user.level):
+        user.xp -= xp_for_next_level(user.level)
+        user.level += 1
+        leveled_up = True
+
+    return leveled_up
+
+@app.route('/profile')
+def profile():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    user_id = session['user_id']
+    user = User.query.get(user_id)
+
+    if user:
+        total_habits = Habit.query.filter_by(user_id=user_id).count()
+
+        habit_completions = HabitCompletion.query.filter_by(user_id=user_id).all()
+        streaks = {}  
+        for completion in habit_completions:
+            habit_id = completion.habit_id
+            if habit_id not in streaks:
+                streaks[habit_id] = 1 
+            else:
+                streaks[habit_id] += 1
+
+        max_streak = max(streaks.values(), default=0)
+
+        badges = ['Habit Master', 'Streak King', 'Goal Crusher'] 
+
+        return render_template('profile.html', user=user, total_habits=total_habits, max_streak=max_streak, badges=badges)
+    else:
+        flash("User not found.")
+        return redirect(url_for('index'))
+
+
+@app.route('/edit_profile', methods=['GET', 'POST'])
+def edit_profile():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    user_id = session['user_id']
+    user = User.query.get(user_id)
+
+    if request.method == 'POST':
+        username = request.form['username']
+        birthday_str = request.form['birthday']
+        age = request.form['age']
+        description = request.form['description']
+
+        try:
+            birthday = datetime.strptime(birthday_str, '%Y-%m-%d').date()
+            age = int(age)
+
+            # Check if new username is taken (and is not the current user's)
+            if username != user.username:
+                if User.query.filter_by(username=username).first():
+                    flash("Username already taken.")
+                    return redirect(url_for('edit_profile'))
+
+            # Save all updates
+            user.username = username
+            user.birthday = birthday
+            user.age = age
+            user.description = description
+
+            db.session.commit()
+            flash("Profile updated successfully!")
+            return redirect(url_for('profile'))
+
+        except ValueError:
+            flash("Invalid input. Please make sure all fields are correct.")
+            return redirect(url_for('edit_profile'))
+
+    return render_template('edit_profile.html', user=user)
 
 with app.app_context():
     db.create_all()
