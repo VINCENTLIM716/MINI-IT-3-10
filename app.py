@@ -15,9 +15,9 @@ class User(db.Model):
     password = db.Column(db.String(200), nullable=False)
     xp = db.Column(db.Integer, default=0)
     level = db.Column(db.Integer, default=1)
-    birthday = db.Column(db.Date, nullable=True)  # Birthday field
-    age = db.Column(db.Integer, nullable=True)  # Age field
-    description = db.Column(db.String(500), nullable=True)  # Description field
+    birthday = db.Column(db.Date, nullable=True)  
+    age = db.Column(db.Integer, nullable=True)  
+    description = db.Column(db.String(500), nullable=True)  
 
 
 
