@@ -146,7 +146,7 @@ button:hover i {
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     text-align: center;
 }
-/* ----------------- Profile Page Styling ------------------ */
+
 body.profile .profile-container {
     max-width: 600px;
     margin: 40px auto;
@@ -185,7 +185,6 @@ body.profile .edit-button:hover {
     background-color: #2980b9;
 }
 
-/* ----------------- Edit Profile Page Styling ------------------ */
 body.edit_profile .edit-profile {
     max-width: 600px;
     margin: 40px auto;
