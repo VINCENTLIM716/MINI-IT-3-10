@@ -18,6 +18,21 @@
                 />
             </div>
 
+            <!-- Add frequency selection -->
+            <div class="mb-8">
+                <label for="habit_frequency" class="block text-lg font-medium text-gray-800 mb-3">Frequency</label>
+                <select
+                    id="habit_frequency"
+                    name="frequency"
+                    required
+                    class="w-full px-6 py-4 text-lg border-2 border-gray-300 rounded-xl shadow focus:outline-none focus:ring-4 focus:ring-green-400 transition duration-300"
+                >
+                    <option value="daily">Daily</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="monthly">Monthly</option>
+                </select>
+            </div>
+
             <button 
                 type="submit" 
                 class="w-full bg-green-600 hover:bg-green-700 text-white text-xl font-bold py-4 rounded-full shadow-md transition duration-300">
@@ -31,4 +46,4 @@
         </div>
     </div>
 </div>
-{% endblock %}
+{% endblock %}
