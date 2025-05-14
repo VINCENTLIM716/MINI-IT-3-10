@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import date,datetime,timedelta
+from datetime import date,datetime
 from flask_mail import Mail, Message
 import random
 import os
@@ -41,7 +41,6 @@ class Habit(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     name = db.Column(db.String(150), nullable=False)
-    frequency = db.Column(db.String(20), nullable=False, default="Daily") 
 
 class HabitCompletion(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -150,7 +149,6 @@ def habits():
             'id': habit.id,
             'name': habit.name,
             'streak': completions,
-            'frequency': habit.frequency  # Show frequency
         })
 
     return render_template('habit.html',
@@ -159,7 +157,6 @@ def habits():
                            user=user,
                            xp_needed=xp_needed,
                            progress_class=progress_class)
-
 
 @app.route('/stats')
 def stats():
@@ -193,10 +190,9 @@ def add_habit():
 
     if request.method == 'POST':
         habit_name = request.form['habit_name']
-        frequency = request.form['frequency']  # Get the selected frequency
         user_id = session['user_id']
 
-        new_habit = Habit(name=habit_name, user_id=user_id, frequency=frequency)  # Store frequency
+        new_habit = Habit(name=habit_name, user_id=user_id)
         db.session.add(new_habit)
         db.session.commit()
 
@@ -204,7 +200,6 @@ def add_habit():
         return redirect(url_for('habits'))
 
     return render_template('add_habit.html')
-
 
 @app.route('/complete_habit/<int:habit_id>', methods=['POST'])
 def complete_habit(habit_id):
@@ -214,42 +209,27 @@ def complete_habit(habit_id):
     user_id = session['user_id']
     today = date.today()
 
-    habit = Habit.query.get(habit_id)
-    if not habit:
-        flash('Habit not found!')
-        return redirect(url_for('habits'))
+    existing_completion = HabitCompletion.query.filter_by(
+        habit_id=habit_id,
+        user_id=user_id,
+        date=today
+    ).first()
 
-    # Check the frequency and the last completion date
-    frequency = habit.frequency
-    last_completion = HabitCompletion.query.filter_by(habit_id=habit_id, user_id=user_id).order_by(HabitCompletion.date.desc()).first()
+    if existing_completion:
+        flash('✅ You already completed this habit today!')
+    else:
+        completion = HabitCompletion(habit_id=habit_id, user_id=user_id, date=today)
+        db.session.add(completion)
 
-    if frequency == "Daily":
-        last_completed_date = last_completion.date if last_completion else None
-        if last_completed_date == today:
-            flash('✅ You already completed this habit today!')
-            return redirect(url_for('habits'))
-    elif frequency == "Weekly":
-        if last_completion and last_completion.date >= today - timedelta(days=7):
-            flash('✅ You already completed this habit this week!')
-            return redirect(url_for('habits'))
-    elif frequency == "Monthly":
-        if last_completion and last_completion.date.month == today.month and last_completion.date.year == today.year:
-            flash('✅ You already completed this habit this month!')
-            return redirect(url_for('habits'))
+        user = User.query.get(user_id)
+        xp_earned = 30
+        leveled_up = add_xp_and_check_level(user, xp_earned)
 
-    # Add new completion
-    completion = HabitCompletion(habit_id=habit_id, user_id=user_id, date=today)
-    db.session.add(completion)
+        db.session.commit()
 
-    user = User.query.get(user_id)
-    xp_earned = 30
-    leveled_up = add_xp_and_check_level(user, xp_earned)
-
-    db.session.commit()
-
-    flash(f'🎉 Habit completed! +{xp_earned} XP earned.')
-    if leveled_up:
-        flash(f'🚀 You leveled up to Level {user.level}!')
+        flash(f'🎉 Habit completed! +{xp_earned} XP earned.')
+        if leveled_up:
+            flash(f'🚀 You leveled up to Level {user.level}!')
 
     return redirect(url_for('habits'))
 
