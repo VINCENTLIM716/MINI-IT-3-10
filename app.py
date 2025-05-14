@@ -253,31 +253,7 @@ def stats():
 
     return render_template('stats.html', stats=stats, chart_data=chart_data)
 
-
 @app.route('/add_habit', methods=['GET', 'POST'])
-def add_habit():
-    if 'user_id' not in session:
-        return redirect(url_for('login')) 
-
-    if request.method == 'POST':
-        habit_name = request.form['habit_name']
-        target_frequency = int(request.form['target_frequency'])
-        frequency_period = request.form['frequency_period']
-        user_id = session['user_id']
-
-        new_habit = Habit(
-            name=habit_name,
-            user_id=user_id,
-            target_frequency=target_frequency,
-            frequency_period=frequency_period
-        ) 
-        db.session.add(new_habit)
-        db.session.commit()
-
-        flash('Habit added successfully!')
-        return redirect(url_for('habits'))
-    
-    return render_template('add_habit.html')@app.route('/add_habit', methods=['GET', 'POST'])
 def add_habit():
     if 'user_id' not in session:
         return redirect(url_for('login'))
@@ -300,7 +276,7 @@ def add_habit():
         flash('Habit added successfully!')
         return redirect(url_for('habits'))
 
-    return render_template('addhabit.html')
+    return render_template('add_habit.html')
 
 @app.route('/complete_habit/<int:habit_id>', methods=['POST'])
 def complete_habit(habit_id):
@@ -395,7 +371,6 @@ def profile():
         return redirect(url_for('index'))
 
 
-@app.route('/edit_profile', methods=['GET', 'POST'])
 @app.route('/edit_profile', methods=['GET', 'POST'])
 def edit_profile():
     if 'user_id' not in session:
