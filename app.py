@@ -36,8 +36,6 @@ class User(db.Model):
     age = db.Column(db.Integer, nullable=True)  
     description = db.Column(db.String(500), nullable=True)
     avatar = db.Column(db.String(200), nullable=True)  
-    frequency = db.Column(db.String(20), default='daily') 
-
 
 class Habit(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -193,10 +191,9 @@ def add_habit():
 
     if request.method == 'POST':
         habit_name = request.form['habit_name']
-        frequency = request.form['frequency']
         user_id = session['user_id']
 
-        new_habit = Habit(name=habit_name, frequency=frequency, user_id=user_id)
+        new_habit = Habit(name=habit_name, user_id=user_id)
         db.session.add(new_habit)
         db.session.commit()
 
@@ -204,7 +201,6 @@ def add_habit():
         return redirect(url_for('habits'))
 
     return render_template('add_habit.html')
-
 
 @app.route('/complete_habit/<int:habit_id>', methods=['POST'])
 def complete_habit(habit_id):
