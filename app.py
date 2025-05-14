@@ -4,6 +4,11 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import date,datetime
 from flask_mail import Mail, Message
 import random
+import os
+from werkzeug.utils import secure_filename
+
+UPLOAD_FOLDER = 'static/avatars'
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 app = Flask(__name__)
 app.secret_key = 'secret123'
@@ -15,19 +20,22 @@ app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USERNAME'] = 'kerksiauer@gmail.com'  
 app.config['MAIL_PASSWORD'] = 'rhss uwam sogx zzfg'  
 app.config['MAIL_DEFAULT_SENDER'] = 'kerksiauer@gmail.com'  
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 mail = Mail(app)
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(150), unique=True, nullable=False)
-    username = db.Column(db.String(150), unique=True, nullable=True)
+    name = db.Column(db.String(150), unique=True, nullable=True)
     password = db.Column(db.String(200), nullable=False)
     xp = db.Column(db.Integer, default=0)
     level = db.Column(db.Integer, default=1)
     birthday = db.Column(db.Date, nullable=True)  
     age = db.Column(db.Integer, nullable=True)  
-    description = db.Column(db.String(500), nullable=True)  
+    description = db.Column(db.String(500), nullable=True)
+    avatar = db.Column(db.String(200), nullable=True)  
 
 class Habit(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -180,7 +188,7 @@ def habits():
         return redirect(url_for('login'))
 
     user_id = session['user_id']
-    username = session.get('username')
+    name = session.get('name')
     user = User.query.get(user_id)
 
     xp_needed = 100 + (user.level - 1) * 50
@@ -196,12 +204,11 @@ def habits():
             'id': habit.id,
             'name': habit.name,
             'streak': completions,
-            'frequency': "Daily"
         })
 
     return render_template('habit.html',
                            habits=habits_with_data,
-                           username=username,
+                           name=name,
                            user=user,
                            xp_needed=xp_needed,
                            progress_class=progress_class)
@@ -343,6 +350,7 @@ def profile():
 
 
 @app.route('/edit_profile', methods=['GET', 'POST'])
+@app.route('/edit_profile', methods=['GET', 'POST'])
 def edit_profile():
     if 'user_id' not in session:
         return redirect(url_for('login'))
@@ -351,7 +359,7 @@ def edit_profile():
     user = User.query.get(user_id)
 
     if request.method == 'POST':
-        username = request.form['username']
+        name = request.form['name']
         birthday_str = request.form['birthday']
         age = request.form['age']
         description = request.form['description']
@@ -360,15 +368,25 @@ def edit_profile():
             birthday = datetime.strptime(birthday_str, '%Y-%m-%d').date()
             age = int(age)
 
-            if username != user.username:
-                if User.query.filter_by(username=username).first():
-                    flash("Username already taken.")
+            if name != user.name:
+                if User.query.filter_by(name=name).first():
+                    flash("Name already taken.")
                     return redirect(url_for('edit_profile'))
 
-            user.username = username
+            user.name = name
             user.birthday = birthday
             user.age = age
             user.description = description
+
+            if 'avatar' in request.files:
+                avatar_file = request.files['avatar']
+                if avatar_file and avatar_file.filename != '' and '.' in avatar_file.filename:
+                    ext = avatar_file.filename.rsplit('.', 1)[1].lower()
+                    if ext in ['png', 'jpg', 'jpeg', 'gif']:
+                        filename = f"user_{user.id}_avatar.{ext}"
+                        avatar_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                        avatar_file.save(avatar_path)
+                        user.avatar = filename
 
             db.session.commit()
             flash("Profile updated successfully!")
@@ -379,6 +397,10 @@ def edit_profile():
             return redirect(url_for('edit_profile'))
 
     return render_template('edit_profile.html', user=user)
+
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 with app.app_context():
     db.create_all()
