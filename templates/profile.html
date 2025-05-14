@@ -5,7 +5,7 @@
     <div class="profile-header">
         <img src="{{ url_for('static', filename='avatar_default.png') }}" alt="Avatar" class="avatar">
         <div class="profile-info">
-            <h1>{{ user.username }}</h1>
+            <h1>{{ user.name }}</h1>
             <p><i class="fas fa-birthday-cake"></i> Birthday: {{ user.birthday }}</p>
             <p><i class="fas fa-hourglass-half"></i> Age: {{ user.age }}</p>
             <p><i class="fas fa-user"></i> About Me: {{ user.description }}</p>

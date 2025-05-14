@@ -21,7 +21,7 @@ mail = Mail(app)
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(150), unique=True, nullable=False)
-    username = db.Column(db.String(150), unique=True, nullable=True)
+    name = db.Column(db.String(150), unique=True, nullable=True)
     password = db.Column(db.String(200), nullable=False)
     xp = db.Column(db.Integer, default=0)
     level = db.Column(db.Integer, default=1)
@@ -125,7 +125,7 @@ def habits():
         return redirect(url_for('login'))
 
     user_id = session['user_id']
-    username = session.get('username')
+    name = session.get('name')
     user = User.query.get(user_id)
 
     xp_needed = 100 + (user.level - 1) * 50
@@ -146,7 +146,7 @@ def habits():
 
     return render_template('habit.html',
                            habits=habits_with_data,
-                           username=username,
+                           name=name,
                            user=user,
                            xp_needed=xp_needed,
                            progress_class=progress_class)
@@ -296,7 +296,7 @@ def edit_profile():
     user = User.query.get(user_id)
 
     if request.method == 'POST':
-        username = request.form['username']
+        name = request.form['name']
         birthday_str = request.form['birthday']
         age = request.form['age']
         description = request.form['description']
@@ -305,12 +305,12 @@ def edit_profile():
             birthday = datetime.strptime(birthday_str, '%Y-%m-%d').date()
             age = int(age)
 
-            if username != user.username:
-                if User.query.filter_by(username=username).first():
+            if name != user.name:
+                if User.query.filter_by(name=name).first():
                     flash("Username already taken.")
                     return redirect(url_for('edit_profile'))
 
-            user.username = username
+            user.name = name
             user.birthday = birthday
             user.age = age
             user.description = description
