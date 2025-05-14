@@ -113,6 +113,61 @@ def login():
 
     return render_template('login.html')
 
+@app.route('/forgot_password', methods=['GET', 'POST'])
+def forgot_password():
+    if request.method == 'POST':
+        email = request.form['email']
+        user = User.query.filter_by(email=email).first()
+
+        if user:
+            otp = random.randint(100000, 999999)
+            session['reset_otp'] = otp
+            session['reset_email'] = email
+
+            msg = Message('Password Reset OTP', recipients=[email])
+            msg.body = f'Your OTP to reset your password is: {otp}'
+            try:
+                mail.send(msg)
+                flash('OTP sent to your email.')
+                return redirect(url_for('reset_password_verify'))
+            except Exception as e:
+                flash(f"Failed to send OTP: {str(e)}")
+        else:
+            flash('No account with that email.')
+    return render_template('forgot_password.html')
+
+@app.route('/reset_password_verify', methods=['GET', 'POST'])
+def reset_password_verify():
+    if request.method == 'POST':
+        entered_otp = request.form['otp']
+        if int(entered_otp) == session.get('reset_otp'):
+            flash("OTP verified. Please set your new password.")
+            return redirect(url_for('reset_password'))
+        else:
+            flash("Invalid OTP.")
+    return render_template('reset_password_verify.html')
+
+@app.route('/reset_password', methods=['GET', 'POST'])
+def reset_password():
+    if request.method == 'POST':
+        new_password = request.form['new_password']
+        hashed = generate_password_hash(new_password)
+
+        email = session.get('reset_email')
+        user = User.query.filter_by(email=email).first()
+        if user:
+            user.password = hashed
+            db.session.commit()
+            flash("Password reset successful. You can now log in.")
+            session.pop('reset_email', None)
+            session.pop('reset_otp', None)
+            return redirect(url_for('login'))
+        else:
+            flash("Error resetting password.")
+
+    return render_template('reset_password.html')
+
+
 @app.route('/logout')
 def logout():
     session.clear()
