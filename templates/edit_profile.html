@@ -14,9 +14,9 @@
         {% endif %}
     {% endwith %}
 
-    <form method="POST">
+    <form method="POST" enctype="multipart/form-data">
         <div class="form-group">
-            <label for="username">Name:</label>
+            <label for="name">Name:</label>
             <input type="text" name="name" value="{{ user.name or '' }}" required>
         </div>
 
@@ -33,6 +33,19 @@
         <div class="form-group">
             <label for="description">Description:</label>
             <textarea name="description" required>{{ user.description }}</textarea>
+        </div>
+
+        <!-- 👇 Avatar upload -->
+        <div class="form-group">
+            <label for="avatar">Upload Avatar:</label>
+            <input type="file" name="avatar" accept="image/*">
+        </div>
+
+        <!-- 👇 Show current avatar -->
+        <div class="form-group">
+            <label>Current Avatar:</label><br>
+            <img src="{{ url_for('static', filename='avatars/' + (user.avatar if user.avatar else 'default.png')) }}"
+                 alt="Avatar" class="rounded-full" width="120" height="120">
         </div>
 
         <button type="submit" class="button save-button">Save Changes</button>
