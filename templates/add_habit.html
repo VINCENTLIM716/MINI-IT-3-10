@@ -18,6 +18,34 @@
                 />
             </div>
 
+            <div class="mb-8">
+                <label for="target_frequency" class="block text-lg font-medium text-gray-800 mb-3">Target Frequency</label>
+                <input 
+                    type="number" 
+                    id="target_frequency" 
+                    name="target_frequency" 
+                    min="1" 
+                    required
+                    placeholder="e.g., 3"
+                    class="w-full px-6 py-4 text-lg border-2 border-gray-300 rounded-xl shadow focus:outline-none focus:ring-4 focus:ring-green-400 transition duration-300"
+                />
+            </div>
+
+            <div class="mb-8">
+                <label for="frequency_period" class="block text-lg font-medium text-gray-800 mb-3">Per</label>
+                <select 
+                    id="frequency_period" 
+                    name="frequency_period" 
+                    required
+                    class="w-full px-6 py-4 text-lg border-2 border-gray-300 rounded-xl shadow focus:outline-none focus:ring-4 focus:ring-green-400 transition duration-300"
+                >
+                    <option value="day">Day</option>
+                    <option value="week">Week</option>
+                    <option value="month">Month</option>
+                </select>
+            </div>
+
+            <!-- Submit Button -->
             <button 
                 type="submit" 
                 class="w-full bg-green-600 hover:bg-green-700 text-white text-xl font-bold py-4 rounded-full shadow-md transition duration-300">
@@ -26,9 +54,8 @@
         </form>
 
         <div class="text-center mt-8">
-            <a href="{{ url_for('habits') }}" 
-               class="text-blue-600 hover:underline text-base">← Back to Your Habits</a>
+            <a href="{{ url_for('habits') }}" class="text-blue-600 hover:underline text-base">← Back to Your Habits</a>
         </div>
     </div>
 </div>
-{% endblock %}
+{% endblock %}

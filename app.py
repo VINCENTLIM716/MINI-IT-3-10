@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import date,datetime
+from datetime import date,datetime,timedelta
 from flask_mail import Mail, Message
 import random
 import os
@@ -41,6 +41,8 @@ class Habit(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     name = db.Column(db.String(150), nullable=False)
+    target_frequency = db.Column(db.Integer, nullable=True)  
+    frequency_period = db.Column(db.String(10), nullable=True)
 
 class HabitCompletion(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -198,12 +200,26 @@ def habits():
     user_habits = Habit.query.filter_by(user_id=user_id).all()
 
     habits_with_data = []
+    
     for habit in user_habits:
-        completions = HabitCompletion.query.filter_by(habit_id=habit.id, user_id=user_id).count()
+        completions_query = HabitCompletion.query.filter_by(habit_id=habit.id, user_id=user_id)
+
+        if habit.frequency_period == 'day':
+            start_date = date.today()
+        elif habit.frequency_period == 'week':
+            start_date = date.today() - timedelta(days=date.today().weekday())  
+        elif habit.frequency_period == 'month':
+            start_date = date.today().replace(day=1)
+
+        completions = completions_query.filter(HabitCompletion.date >= start_date).count()
+
         habits_with_data.append({
             'id': habit.id,
             'name': habit.name,
             'streak': completions,
+            'goal': habit.target_frequency,
+            'period': habit.frequency_period,
+            'on_track': completions >= habit.target_frequency
         })
 
     return render_template('habit.html',
@@ -245,16 +261,46 @@ def add_habit():
 
     if request.method == 'POST':
         habit_name = request.form['habit_name']
+        target_frequency = int(request.form['target_frequency'])
+        frequency_period = request.form['frequency_period']
         user_id = session['user_id']
 
-        new_habit = Habit(name=habit_name, user_id=user_id)
+        new_habit = Habit(
+            name=habit_name,
+            user_id=user_id,
+            target_frequency=target_frequency,
+            frequency_period=frequency_period
+        ) 
         db.session.add(new_habit)
         db.session.commit()
 
         flash('Habit added successfully!')
         return redirect(url_for('habits'))
+    
+    return render_template('add_habit.html')@app.route('/add_habit', methods=['GET', 'POST'])
+def add_habit():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
 
-    return render_template('add_habit.html')
+    if request.method == 'POST':
+        habit_name = request.form['habit_name']
+        target_frequency = int(request.form['target_frequency'])
+        frequency_period = request.form['frequency_period']
+        user_id = session['user_id']
+
+        new_habit = Habit(
+            name=habit_name,
+            user_id=user_id,
+            target_frequency=target_frequency,
+            frequency_period=frequency_period
+        )
+
+        db.session.add(new_habit)
+        db.session.commit()
+        flash('Habit added successfully!')
+        return redirect(url_for('habits'))
+
+    return render_template('addhabit.html')
 
 @app.route('/complete_habit/<int:habit_id>', methods=['POST'])
 def complete_habit(habit_id):

@@ -45,7 +45,7 @@
                 {% for habit in habits %}
                     <div class="habit-card bg-white p-5 rounded-xl shadow-md border border-gray-200">
                         <h4 class="text-lg font-bold text-gray-900">{{ habit.name }}</h4>
-                        <p class="text-gray-600 text-sm mt-1">Frequency: Daily</p>
+                        <p class="text-gray-600 text-sm mt-1">Frequency: {{ habit.goal }} per {{ habit.period }}</p>
                         <p class="text-gray-600 text-sm">Streak: 🔥 {{ habit.streak }} days</p>
                         
                         <form action="{{ url_for('complete_habit', habit_id=habit.id) }}" method="post" style="display:inline;">
