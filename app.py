@@ -170,10 +170,15 @@ def reset_password_verify():
 def reset_password():
     if request.method == 'POST':
         new_password = request.form['new_password']
+        confirm_password = request.form['confirm_password']
+        if new_password != confirm_password:
+            flash("Passwords do not match. Please try again.")
+            return redirect(url_for('reset_password'))
+    
         hashed = generate_password_hash(new_password)
-
         email = session.get('reset_email')
         user = User.query.filter_by(email=email).first()
+        
         if user:
             user.password = hashed
             db.session.commit()
@@ -261,6 +266,38 @@ def stats():
     }
 
     return render_template('stats.html', stats=stats, chart_data=chart_data)
+
+@app.route('/weekly_report')
+def weekly_report():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    user_id = session['user_id']
+    today = date.today()
+    start_of_week = today - timedelta(days=today.weekday())  
+    
+    daily_completions = {}
+    total_habits = Habit.query.filter_by(user_id=user_id).count()
+
+    for i in range(7):
+        day = start_of_week + timedelta(days=i)
+        count = HabitCompletion.query.filter_by(user_id=user_id, date=day).count()
+        daily_completions[day.strftime('%a %d')] = count  
+
+    total_completed = sum(daily_completions.values())
+    avg_completion_rate = (total_completed / (total_habits * 7) * 100) if total_habits > 0 else 0
+
+    zipped_data = list(zip(daily_completions.keys(), daily_completions.values()))
+
+    report_data = {
+        'daily_data': zipped_data,
+        'total_habits': total_habits,
+        'total_completed': total_completed,
+        'avg_completion_rate': round(avg_completion_rate, 1)
+    }
+
+    return render_template('weekly_report.html', report=report_data)
+
 
 @app.route('/add_habit', methods=['GET', 'POST'])
 def add_habit():
