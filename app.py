@@ -1,19 +1,25 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import date,datetime,timedelta
 from flask_mail import Mail, Message
 import random
 import os
 from werkzeug.utils import secure_filename
+from apscheduler.schedulers.background import BackgroundScheduler
+from datetime import datetime
+from sqlalchemy import Column, DateTime
 
+scheduler = BackgroundScheduler()
 UPLOAD_FOLDER = 'static/avatars'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 app = Flask(__name__)
-app.secret_key = 'secret123'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)
+app.secret_key = 'secret123'
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'  
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
@@ -43,6 +49,9 @@ class Habit(db.Model):
     name = db.Column(db.String(150), nullable=False)
     target_frequency = db.Column(db.Integer, nullable=True)  
     frequency_period = db.Column(db.String(10), nullable=True)
+    reminder_time = db.Column(db.Time, nullable=True)
+    user = db.relationship('User', backref='habits')
+    last_reminder_sent = db.Column(DateTime, nullable=True)
 
 class HabitCompletion(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -262,18 +271,24 @@ def add_habit():
         habit_name = request.form['habit_name']
         target_frequency = int(request.form['target_frequency'])
         frequency_period = request.form['frequency_period']
+        reminder_time_str = request.form.get('reminder_time')  
         user_id = session['user_id']
+
+        reminder_time = None
+        if reminder_time_str:
+            reminder_time = datetime.strptime(reminder_time_str, '%H:%M').time()
 
         new_habit = Habit(
             name=habit_name,
             user_id=user_id,
             target_frequency=target_frequency,
-            frequency_period=frequency_period
+            frequency_period=frequency_period,
+            reminder_time=reminder_time  
         )
 
         db.session.add(new_habit)
         db.session.commit()
-        flash('Habit added successfully!')
+        flash('Habit added successfully with reminder!')
         return redirect(url_for('habits'))
 
     return render_template('add_habit.html')
@@ -423,8 +438,52 @@ def edit_profile():
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+def send_reminder_email(user_email, habit_name):
+    try:
+        msg = Message(
+            subject='⏰ Habit Reminder!',
+            recipients=[user_email]
+        )
+        msg.body = (
+            f"Hello!\n\n"
+            f"This is a friendly reminder to come Habit Traveler and check in your habit: \"{habit_name}\".\n"
+            f"Keep up the great work and stay consistent!\n\n"
+            f"See you in the app!"
+        )
+        mail.send(msg)
+        print(f"Reminder sent to {user_email} for habit {habit_name}")
+    except Exception as e:
+        print(f"Error sending reminder email: {e}")
+
+def check_and_send_reminders():
+    with app.app_context():
+        now = datetime.now()
+        now_time = now.time().replace(second=0, microsecond=0)
+
+        one_min_ago = (now - timedelta(minutes=1)).time()
+
+        habits_due = Habit.query.filter(
+            Habit.reminder_time >= one_min_ago,
+            Habit.reminder_time <= now_time
+        ).all()
+
+        for habit in habits_due:
+            if habit.last_reminder_sent and habit.last_reminder_sent.date() == now.date():
+                continue
+
+            user_email = habit.user.email
+            send_reminder_email(user_email, habit.name)
+
+            habit.last_reminder_sent = now
+            db.session.commit()
+
+scheduler = BackgroundScheduler()
+scheduler.add_job(check_and_send_reminders, 'interval', minutes=1)
+
 with app.app_context():
     db.create_all()
 
 if __name__ == '__main__':
+    if os.environ.get("WERKZEUG_RUN_MAIN") == "true":
+        scheduler.start()
     app.run(debug=True)
