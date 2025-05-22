@@ -496,7 +496,6 @@ def check_and_send_reminders():
     with app.app_context():
         now = datetime.now()
         now_time = now.time().replace(second=0, microsecond=0)
-
         one_min_ago = (now - timedelta(minutes=1)).time()
 
         habits_due = Habit.query.filter(
@@ -504,15 +503,27 @@ def check_and_send_reminders():
             Habit.reminder_time <= now_time
         ).all()
 
+        today = date.today()
+
         for habit in habits_due:
-            if habit.last_reminder_sent and habit.last_reminder_sent.date() == now.date():
+            if habit.last_reminder_sent and habit.last_reminder_sent.date() == today:
                 continue
+
+            completed_today = HabitCompletion.query.filter_by(
+                habit_id=habit.id,
+                user_id=habit.user_id,
+                date=today
+            ).first()
+
+            if completed_today:
+                continue 
 
             user_email = habit.user.email
             send_reminder_email(user_email, habit.name)
 
             habit.last_reminder_sent = now
             db.session.commit()
+
 
 scheduler = BackgroundScheduler()
 scheduler.add_job(check_and_send_reminders, 'interval', minutes=1)
