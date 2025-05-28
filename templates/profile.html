@@ -26,13 +26,20 @@
     <div class="profile-section">
         <h2><i class="fas fa-medal"></i> Badges</h2>
         <div class="badges">
-            {% for badge in user.badges %}
-                <span class="badge">{{ badge }}</span>
+            {% if user.user_badges %}
+                {% for user_badge in user.user_badges %}
+                    <div class="badge">
+                        <strong>{{ user_badge.badge.name }}</strong><br>
+                        <small>{{ user_badge.badge.description }}</small><br>
+                        <em>Earned on {{ user_badge.earned_date.strftime('%Y-%m-%d') }}</em>
+                    </div>
+                {% endfor %}
             {% else %}
                 <p>No badges earned yet.</p>
-            {% endfor %}
+            {% endif %}
         </div>
     </div>
+
 
     <div class="profile-actions">
         <a href="{{ url_for('edit_profile') }}" class="edit-button"><i class="fas fa-edit"></i> Edit Profile</a>
