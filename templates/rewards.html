@@ -26,7 +26,9 @@
                 <h2 class="text-lg font-semibold">{{ badge.name }}</h2>
                 <p class="text-sm text-gray-700">{{ badge.description }}</p>
                 <p class="text-xs text-gray-500">Requires Level {{ badge.level_required }}</p>
-                <span class="text-gray-500">Not earned yet</span>
+                <span class="text-gray-500">
+                    <i class="fas fa-lock mr-1"></i> Locked
+                </span>
             </div>
             {% endif %}
         {% endfor %}
