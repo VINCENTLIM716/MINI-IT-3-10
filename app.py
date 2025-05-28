@@ -370,7 +370,6 @@ def complete_habit(habit_id):
         xp_earned = 30
         leveled_up = add_xp_and_check_level(user, xp_earned)
 
-        # Award badges once after XP/level updated
         check_and_award_badges(user)
 
         db.session.commit()
@@ -419,13 +418,11 @@ def check_and_award_badges(user):
     earned_badge_names = {ub.badge.name for ub in user.user_badges}
     available_badges = Badge.query.all()
 
-    # Award badges based on level
     for badge in available_badges:
         if badge.level_required and user.level >= badge.level_required and badge.id not in earned_badge_ids:
             db.session.add(UserBadge(user_id=user.id, badge_id=badge.id))
             flash(f"🏅 You earned a new badge: {badge.name}!")
 
-    # First Step badge - if user completed any habit but does not have this badge yet
     if "First Step" not in earned_badge_names:
         has_completed_any = HabitCompletion.query.filter_by(user_id=user.id).first()
         if has_completed_any:
@@ -433,22 +430,6 @@ def check_and_award_badges(user):
             if first_step_badge and first_step_badge.id not in earned_badge_ids:
                 db.session.add(UserBadge(user_id=user.id, badge_id=first_step_badge.id))
                 flash("🏅 You earned a new badge: First Step!")
-
-    # Consistent Starter badge - 3-day streak
-    if "Consistent Starter" not in earned_badge_names:
-        today = date.today()
-        three_days_ago = today - timedelta(days=2)
-        recent_completions = HabitCompletion.query.filter(
-            HabitCompletion.user_id == user.id,
-            HabitCompletion.date >= three_days_ago
-        ).all()
-        unique_days = {c.date for c in recent_completions}
-        if len(unique_days) >= 3:
-            starter_badge = next((b for b in available_badges if b.name == "Consistent Starter"), None)
-            if starter_badge and starter_badge.id not in earned_badge_ids:
-                db.session.add(UserBadge(user_id=user.id, badge_id=starter_badge.id))
-                flash("🏅 You earned a new badge: Consistent Starter!")
-
 
 def xp_for_next_level(level):
     return 100 + (level - 1) * 50
@@ -464,22 +445,6 @@ def add_xp_and_check_level(user, amount):
         leveled_up = True
 
     return leveled_up
-
-
-@app.route('/seed_badges')
-def seed_badges():
-    badge_data = [
-        Badge(name="First Step", description="Completed your first habit", level_required=1),
-        Badge(name="Consistent Starter", description="Maintained a 3-day streak", level_required=2),
-        Badge(name="Level Up!", description="Reached level 2", level_required=2),
-        Badge(name="Habit Master", description="Reached level 5", level_required=5),
-        Badge(name="Streak King", description="Reached level 15", level_required=15),
-        Badge(name="Goal Crusher", description="Reached level 30", level_required=30),
-    ]
-    db.session.bulk_save_objects(badge_data)
-    db.session.commit()
-    return "🎉 6 Badges seeded!"
-
 
 def xp_for_next_level(level):
     return 100 + (level - 1) * 50
@@ -537,7 +502,6 @@ def profile():
 
         max_streak = max(streaks.values(), default=0)
 
-        # Create a unique badges list locally for the template
         unique_badges = {}
         for user_badge in user.user_badges:
             if user_badge.badge_id not in unique_badges:
@@ -548,7 +512,7 @@ def profile():
                                user=user,
                                total_habits=total_habits,
                                max_streak=max_streak,
-                               unique_user_badges=unique_user_badges)  # pass deduped badges separately
+                               unique_user_badges=unique_user_badges) 
 
     else:
         flash("User not found.")
