@@ -59,6 +59,22 @@ class HabitCompletion(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     date = db.Column(db.Date, default=date.today)
 
+class Badge(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), unique=True, nullable=False)
+    description = db.Column(db.String(300))
+    level_required = db.Column(db.Integer, nullable=False)
+
+class UserBadge(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    badge_id = db.Column(db.Integer, db.ForeignKey('badge.id'), nullable=False)
+    earned_date = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user = db.relationship('User', backref='user_badges')
+    badge = db.relationship('Badge')
+
+
 @app.route('/')
 def index():
     return render_template('base.html')
@@ -379,6 +395,31 @@ def delete_habit(habit_id):
     
     return redirect(url_for('habits')) 
 
+@app.route('/seed_badges')
+def seed_badges():
+    if Badge.query.count() == 0:
+        badge_data = [
+            Badge(name="Habit Master", description="Reached level 5", level_required=5),
+            Badge(name="Streak King", description="Reached level 15", level_required=15),
+            Badge(name="Goal Crusher", description="Reached level 30", level_required=30),
+        ]
+        db.session.bulk_save_objects(badge_data)
+        db.session.commit()
+        return "🎉 Badges seeded!"
+    else:
+        return "Badges already exist."
+
+def check_and_award_badges(user):
+    earned_badge_ids = {ub.badge_id for ub in user.user_badges}
+
+    available_badges = Badge.query.all()
+
+    for badge in available_badges:
+        if user.level >= badge.level_required and badge.id not in earned_badge_ids:
+            new_award = UserBadge(user_id=user.id, badge_id=badge.id)
+            db.session.add(new_award)
+            flash(f"🏅 You earned a new badge: {badge.name}!")
+
 def xp_for_next_level(level):
     return 100 + (level - 1) * 50
 
@@ -390,8 +431,20 @@ def add_xp_and_check_level(user, amount):
         user.xp -= xp_for_next_level(user.level)
         user.level += 1
         leveled_up = True
+        check_and_award_badges(user)
 
     return leveled_up
+
+def check_and_award_badges(user):
+    earned_badge_ids = {ub.badge_id for ub in user.user_badges}
+    available_badges = Badge.query.all()
+
+    for badge in available_badges:
+        if user.level >= badge.level_required and badge.id not in earned_badge_ids:
+            new_award = UserBadge(user_id=user.id, badge_id=badge.id)
+            db.session.add(new_award)
+            flash(f"🏅 You earned a new badge: {badge.name}!")
+
 
 @app.route('/profile')
 def profile():
@@ -415,13 +468,13 @@ def profile():
 
         max_streak = max(streaks.values(), default=0)
 
-        badges = ['Habit Master', 'Streak King', 'Goal Crusher'] 
-
-        return render_template('profile.html', user=user, total_habits=total_habits, max_streak=max_streak, badges=badges)
+        return render_template('profile.html',
+                               user=user,
+                               total_habits=total_habits,
+                               max_streak=max_streak)
     else:
         flash("User not found.")
         return redirect(url_for('index'))
-
 
 @app.route('/edit_profile', methods=['GET', 'POST'])
 def edit_profile():
