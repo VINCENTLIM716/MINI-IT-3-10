@@ -370,6 +370,9 @@ def complete_habit(habit_id):
         xp_earned = 30
         leveled_up = add_xp_and_check_level(user, xp_earned)
 
+        # Award badges once after XP/level updated
+        check_and_award_badges(user)
+
         db.session.commit()
 
         flash(f'🎉 Habit completed! +{xp_earned} XP earned.')
@@ -377,6 +380,7 @@ def complete_habit(habit_id):
             flash(f'🚀 You leveled up to Level {user.level}!')
 
     return redirect(url_for('habits'))
+
 
 @app.route('/delete_habit/<int:habit_id>', methods=['POST'])
 def delete_habit(habit_id):
@@ -395,30 +399,87 @@ def delete_habit(habit_id):
     
     return redirect(url_for('habits')) 
 
-@app.route('/seed_badges')
-def seed_badges():
-    if Badge.query.count() == 0:
-        badge_data = [
-            Badge(name="Habit Master", description="Reached level 5", level_required=5),
-            Badge(name="Streak King", description="Reached level 15", level_required=15),
-            Badge(name="Goal Crusher", description="Reached level 30", level_required=30),
-        ]
-        db.session.bulk_save_objects(badge_data)
-        db.session.commit()
-        return "🎉 Badges seeded!"
-    else:
-        return "Badges already exist."
+
+@app.route('/rewards')
+def rewards():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    user_id = session['user_id']
+    user = User.query.get(user_id)
+
+    all_badges = Badge.query.all()
+    earned_badge_ids = {ub.badge_id for ub in user.user_badges}
+
+    return render_template('rewards.html', all_badges=all_badges, earned_badge_ids=earned_badge_ids)
+
 
 def check_and_award_badges(user):
     earned_badge_ids = {ub.badge_id for ub in user.user_badges}
-
+    earned_badge_names = {ub.badge.name for ub in user.user_badges}
     available_badges = Badge.query.all()
 
+    # Award badges based on level
     for badge in available_badges:
-        if user.level >= badge.level_required and badge.id not in earned_badge_ids:
-            new_award = UserBadge(user_id=user.id, badge_id=badge.id)
-            db.session.add(new_award)
+        if badge.level_required and user.level >= badge.level_required and badge.id not in earned_badge_ids:
+            db.session.add(UserBadge(user_id=user.id, badge_id=badge.id))
             flash(f"🏅 You earned a new badge: {badge.name}!")
+
+    # First Step badge - if user completed any habit but does not have this badge yet
+    if "First Step" not in earned_badge_names:
+        has_completed_any = HabitCompletion.query.filter_by(user_id=user.id).first()
+        if has_completed_any:
+            first_step_badge = next((b for b in available_badges if b.name == "First Step"), None)
+            if first_step_badge and first_step_badge.id not in earned_badge_ids:
+                db.session.add(UserBadge(user_id=user.id, badge_id=first_step_badge.id))
+                flash("🏅 You earned a new badge: First Step!")
+
+    # Consistent Starter badge - 3-day streak
+    if "Consistent Starter" not in earned_badge_names:
+        today = date.today()
+        three_days_ago = today - timedelta(days=2)
+        recent_completions = HabitCompletion.query.filter(
+            HabitCompletion.user_id == user.id,
+            HabitCompletion.date >= three_days_ago
+        ).all()
+        unique_days = {c.date for c in recent_completions}
+        if len(unique_days) >= 3:
+            starter_badge = next((b for b in available_badges if b.name == "Consistent Starter"), None)
+            if starter_badge and starter_badge.id not in earned_badge_ids:
+                db.session.add(UserBadge(user_id=user.id, badge_id=starter_badge.id))
+                flash("🏅 You earned a new badge: Consistent Starter!")
+
+
+def xp_for_next_level(level):
+    return 100 + (level - 1) * 50
+
+
+def add_xp_and_check_level(user, amount):
+    user.xp += amount
+    leveled_up = False
+
+    while user.xp >= xp_for_next_level(user.level):
+        user.xp -= xp_for_next_level(user.level)
+        user.level += 1
+        leveled_up = True
+
+    return leveled_up
+
+
+@app.route('/seed_badges')
+def seed_badges():
+    badge_data = [
+        Badge(name="First Step", description="Completed your first habit", level_required=1),
+        Badge(name="Consistent Starter", description="Maintained a 3-day streak", level_required=2),
+        Badge(name="Level Up!", description="Reached level 2", level_required=2),
+        Badge(name="Habit Master", description="Reached level 5", level_required=5),
+        Badge(name="Streak King", description="Reached level 15", level_required=15),
+        Badge(name="Goal Crusher", description="Reached level 30", level_required=30),
+    ]
+    db.session.bulk_save_objects(badge_data)
+    db.session.commit()
+    return "🎉 6 Badges seeded!"
+
 
 def xp_for_next_level(level):
     return 100 + (level - 1) * 50
@@ -445,7 +506,6 @@ def check_and_award_badges(user):
             db.session.add(new_award)
             flash(f"🏅 You earned a new badge: {badge.name}!")
 
-
 @app.route('/profile')
 def profile():
     if 'user_id' not in session:
@@ -456,25 +516,44 @@ def profile():
 
     if user:
         total_habits = Habit.query.filter_by(user_id=user_id).count()
+        habit_completions = HabitCompletion.query.filter_by(user_id=user_id).order_by(HabitCompletion.date).all()
 
-        habit_completions = HabitCompletion.query.filter_by(user_id=user_id).all()
-        streaks = {}  
+        streaks = {}
+        previous_dates = {}
+
         for completion in habit_completions:
             habit_id = completion.habit_id
+            current_date = completion.date
+
             if habit_id not in streaks:
-                streaks[habit_id] = 1 
+                streaks[habit_id] = 1
+                previous_dates[habit_id] = current_date
             else:
-                streaks[habit_id] += 1
+                if (current_date - previous_dates[habit_id]).days == 1:
+                    streaks[habit_id] += 1
+                else:
+                    streaks[habit_id] = 1
+                previous_dates[habit_id] = current_date
 
         max_streak = max(streaks.values(), default=0)
+
+        # Create a unique badges list locally for the template
+        unique_badges = {}
+        for user_badge in user.user_badges:
+            if user_badge.badge_id not in unique_badges:
+                unique_badges[user_badge.badge_id] = user_badge
+        unique_user_badges = list(unique_badges.values())
 
         return render_template('profile.html',
                                user=user,
                                total_habits=total_habits,
-                               max_streak=max_streak)
+                               max_streak=max_streak,
+                               unique_user_badges=unique_user_badges)  # pass deduped badges separately
+
     else:
         flash("User not found.")
         return redirect(url_for('index'))
+
 
 @app.route('/edit_profile', methods=['GET', 'POST'])
 def edit_profile():
