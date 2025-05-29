@@ -425,40 +425,6 @@ def rewards():
 
     return render_template('rewards.html', all_badges=all_badges, earned_badge_ids=earned_badge_ids)
 
-
-def check_and_award_badges(user):
-    earned_badge_ids = {ub.badge_id for ub in user.user_badges}
-    earned_badge_names = {ub.badge.name for ub in user.user_badges}
-    available_badges = Badge.query.all()
-
-    for badge in available_badges:
-        if badge.level_required and user.level >= badge.level_required and badge.id not in earned_badge_ids:
-            db.session.add(UserBadge(user_id=user.id, badge_id=badge.id))
-            flash(f"🏅 You earned a new badge: {badge.name}!")
-
-    if "First Step" not in earned_badge_names:
-        has_completed_any = HabitCompletion.query.filter_by(user_id=user.id).first()
-        if has_completed_any:
-            first_step_badge = next((b for b in available_badges if b.name == "First Step"), None)
-            if first_step_badge and first_step_badge.id not in earned_badge_ids:
-                db.session.add(UserBadge(user_id=user.id, badge_id=first_step_badge.id))
-                flash("🏅 You earned a new badge: First Step!")
-
-def xp_for_next_level(level):
-    return 100 + (level - 1) * 50
-
-
-def add_xp_and_check_level(user, amount):
-    user.xp += amount
-    leveled_up = False
-
-    while user.xp >= xp_for_next_level(user.level):
-        user.xp -= xp_for_next_level(user.level)
-        user.level += 1
-        leveled_up = True
-
-    return leveled_up
-
 def xp_for_next_level(level):
     return 100 + (level - 1) * 50
 
