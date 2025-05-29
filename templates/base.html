@@ -19,6 +19,7 @@
                 <li><a href="{{ url_for('index') }}">Home</a></li>
                 <li><a href="{{ url_for('habits') }}">Habits</a></li>
                 <li><a href="{{ url_for('stats') }}">Stats</a></li>
+                <a href="{{ url_for('rewards') }}">Rewards</a>
                 <a href="{{ url_for('profile') }}">Profile</a>
                 {% if session.get('user_id') %}
                 <li><a href="{{ url_for('logout') }}">Logout</a></li>
