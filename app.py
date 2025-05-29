@@ -75,9 +75,22 @@ class UserBadge(db.Model):
     badge = db.relationship('Badge')
 
 
+quotes = [
+    "A little progress each day adds up to big results.",
+    "Consistency is the key to success.",
+    "Start where you are. Use what you have. Do what you can.",
+    "Don’t give up — the beginning is always the hardest.",
+    "Your habits determine your future."
+]
+
+def get_daily_quote():
+    today_index = date.today().toordinal() % len(quotes)
+    return quotes[today_index]
+
 @app.route('/')
 def index():
-    return render_template('base.html')
+    daily_quote = get_daily_quote()
+    return render_template('base.html', daily_quote=daily_quote)
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
