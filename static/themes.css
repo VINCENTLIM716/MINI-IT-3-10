@@ -1,0 +1,281 @@
+/*Gentle pink*/
+body.theme-gentle-pink {
+    background: linear-gradient(to bottom right, #ffe6f0, #ffccd5);
+    color: #4a3f55;
+}
+
+body.theme-gentle-pink header,
+body.theme-gentle-pink footer {
+    background: linear-gradient(to right, #fda4af, #f472b6);
+    color: white;
+}
+
+body.theme-gentle-pink a {
+    color: #d6336c;
+}
+body.theme-gentle-pink a:hover {
+    color: #ff6699;
+}
+
+body.theme-gentle-pink section,
+body.theme-gentle-pink main,
+body.theme-gentle-pink .habit-card,
+body.theme-gentle-pink .auth-box,
+body.theme-gentle-pink .stats-box,
+body.theme-gentle-pink .profile-container,
+body.theme-gentle-pink .edit-profile {
+    background: #fff0f5;
+    box-shadow: 0 4px 12px rgba(255, 182, 193, 0.3);
+    color: #6b2d4a;
+}
+
+body.theme-gentle-pink input,
+body.theme-gentle-pink textarea {
+    background-color: #fff7fa;
+    border: 1px solid #f4a6bb;
+    color: #4a3f55;
+}
+body.theme-gentle-pink input:focus,
+body.theme-gentle-pink textarea:focus {
+    border-color: #ff99b3;
+    background-color: #ffe6f0;
+}
+
+body.theme-gentle-pink button,
+body.theme-gentle-pink .edit-button,
+body.theme-gentle-pink .save-button,
+body.theme-gentle-pink .back-button {
+    background-color: #ff99b3;
+    color: black;
+}
+body.theme-gentle-pink button:hover,
+body.theme-gentle-pink .edit-button:hover,
+body.theme-gentle-pink .save-button:hover,
+body.theme-gentle-pink .back-button:hover {
+    background-color: #ff80a1;
+}
+
+body.theme-gentle-pink .habit-card {
+    background-color: #ffe4e9;
+    border: 1px solid #f9c5d1;
+    color: #a83257;
+    box-shadow: 0 4px 10px rgba(249, 186, 210, 0.3);
+}
+body.theme-gentle-pink .habit-card h3 {
+    color: #d6336c;
+}
+body.theme-gentle-pink .habit-card button {
+    background-color: #f78fb3;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 14px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+body.theme-gentle-pink .habit-card button:hover {
+    background-color: #f368e0;
+}
+
+body.theme-gentle-pink .progress-bar {
+    background-color: #f8cdda;
+    height: 10px;
+    border-radius: 5px;
+    overflow: hidden;
+    margin-top: 10px;
+}
+body.theme-gentle-pink .progress-bar-fill {
+    background-color: #ff6b81;
+    height: 100%;
+    transition: width 0.3s ease-in-out;
+}
+
+body.theme-gentle-pink .badge,
+body.theme-gentle-pink .profile .badge {
+    background-color: #ffe0ea;
+    color: #a83257;
+    border: 1px solid #f9c5d1;
+}
+
+/*Calm blue*/
+body.theme-calm-blue {
+    background: linear-gradient(to bottom right, #e3f2fd, #90caf9);
+    color: #1a237e;
+}
+
+body.theme-calm-blue header,
+body.theme-calm-blue footer {
+    background: linear-gradient(to right, #64b5f6, #42a5f5);
+    color: white;
+}
+
+body.theme-calm-blue a {
+    color: #1565c0;
+}
+body.theme-calm-blue a:hover {
+    color: #0d47a1;
+}
+
+body.theme-calm-blue section,
+body.theme-calm-blue main,
+body.theme-calm-blue .habit-card,
+body.theme-calm-blue .auth-box,
+body.theme-calm-blue .stats-box,
+body.theme-calm-blue .profile-container,
+body.theme-calm-blue .edit-profile {
+    background: #e3f2fd;
+    box-shadow: 0 4px 12px rgba(100, 181, 246, 0.3);
+    color: #2a4869;
+}
+
+body.theme-calm-blue input,
+body.theme-calm-blue textarea {
+    background-color: #f0f8ff;
+    border: 1px solid #90caf9;
+    color: #1a237e;
+}
+body.theme-calm-blue input:focus,
+body.theme-calm-blue textarea:focus {
+    border-color: #42a5f5;
+    background-color: #e3f2fd;
+}
+
+body.theme-calm-blue button,
+body.theme-calm-blue .edit-button,
+body.theme-calm-blue .save-button,
+body.theme-calm-blue .back-button {
+    background-color: #42a5f5;
+    color: black;
+}
+body.theme-calm-blue button:hover,
+body.theme-calm-blue .edit-button:hover,
+body.theme-calm-blue .save-button:hover,
+body.theme-calm-blue .back-button:hover {
+    background-color: #1e88e5;
+}
+
+body.theme-calm-blue .habit-card {
+    background-color: #e3f2fd;
+    border: 1px solid #90caf9;
+    color: #0d47a1;
+    box-shadow: 0 4px 10px rgba(144, 202, 249, 0.3);
+}
+body.theme-calm-blue .habit-card h3 {
+    color: #1565c0;
+}
+body.theme-calm-blue .habit-card button {
+    background-color: #64b5f6;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 14px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+body.theme-calm-blue .habit-card button:hover {
+    background-color: #42a5f5;
+}
+
+body.theme-calm-blue .progress-bar {
+    background-color: #bbdefb;
+    height: 10px;
+    border-radius: 5px;
+    overflow: hidden;
+    margin-top: 10px;
+}
+body.theme-calm-blue .progress-bar-fill {
+    background-color: #2196f3;
+    height: 100%;
+    transition: width 0.3s ease-in-out;
+}
+
+body.theme-calm-blue .badge,
+body.theme-calm-blue .profile .badge {
+    background-color: #e3f2fd;
+    color: #0d47a1;
+    border: 1px solid #90caf9;
+}
+
+/*Eye care green*/
+body.theme-eye-care {
+    background-color: #e8f5e9;
+    color: #1b5e20;
+}
+
+body.theme-eye-care header,
+body.theme-eye-care footer {
+    background-color: #c8e6c9;
+    color: #1b5e20;
+}
+
+body.theme-eye-care section,
+body.theme-eye-care main {
+    background-color: #f1f8e9;
+    color: #2e7d32;
+}
+
+body.theme-eye-care a {
+    color: #2e7d32;
+}
+body.theme-eye-care a:hover {
+    color: #1b5e20;
+}
+
+body.theme-eye-care .progress-bar {
+    background-color: #d0f0da;
+    height: 10px;
+    border-radius: 5px;
+    overflow: hidden;
+    margin-top: 10px;
+}
+body.theme-eye-care .progress-bar-fill {
+    background-color: #4caf50;
+    height: 100%;
+    transition: width 0.3s ease-in-out;
+}
+
+body.theme-eye-care .habit-card button {
+    background-color: #66bb6a;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 14px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+body.theme-eye-care .habit-card button:hover {
+    background-color: #388e3c;
+}
+ /*Default theme*/
+body .habit-card button {
+    background-color: #00bfa6; 
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 14px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+body .habit-card button:hover {
+    background-color: #009e88; 
+}
+
+body .progress-bar {
+    background-color: #e0e0e0;
+    height: 10px;
+    border-radius: 5px;
+    overflow: hidden;
+    margin-top: 10px;
+}
+
+body .progress-bar-fill {
+    background-color: #00bfa6; 
+    height: 100%;
+    transition: width 0.3s ease-in-out;
+}
+
