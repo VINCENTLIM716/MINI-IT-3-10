@@ -646,6 +646,5 @@ with app.app_context():
     db.create_all()
 
 if __name__ == '__main__':
-    if os.environ.get("WERKZEUG_RUN_MAIN") == "true":
-        scheduler.start()
+    scheduler.start()
     app.run(debug=True)
