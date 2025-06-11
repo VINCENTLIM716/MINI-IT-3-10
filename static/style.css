@@ -81,13 +81,17 @@ section {
 }
 
 body.auth {
+    background: linear-gradient(to bottom right, #f5f7fa, #c3d9f7);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.auth-page-container {
     display: flex;
     justify-content: center;
     align-items: center;
-    background: linear-gradient(to bottom right, #f5f7fa, #c3d9f7);
-    min-height: 100vh;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    min-height: calc(100vh - 120px); 
 }
+
 
 .auth-box {
     background: #ffffff;
