@@ -81,13 +81,17 @@ section {
 }
 
 body.auth {
+    background: linear-gradient(to bottom right, #f5f7fa, #c3d9f7);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.auth-page-container {
     display: flex;
     justify-content: center;
     align-items: center;
-    background: linear-gradient(to bottom right, #f5f7fa, #c3d9f7);
-    min-height: 100vh;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    min-height: calc(100vh - 120px); 
 }
+
 
 .auth-box {
     background: #ffffff;
@@ -185,12 +189,13 @@ ul li {
 .stats-box {
     background: #ffffff;
     border-radius: 15px;
-    padding: 30px;
-    max-width: 400px;
-    margin: 20px auto;
+    padding: 20px;
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
     text-align: left;
+    max-width: none;
+    margin: 0;
 }
+
 
 .stats-box p {
     font-size: 1.1em;

@@ -116,17 +116,13 @@ def register():
             return redirect(url_for('register'))
 
         session['otp'] = otp
-
-        new_user = User(email=email, password=hashed)
-        db.session.add(new_user)
-        db.session.commit()
-
-        session['user_id'] = new_user.id
-        session['email'] = new_user.email
+        session['email_temp'] = email
+        session['password_temp'] = hashed
 
         return redirect(url_for('verify_otp'))
 
     return render_template('register.html')
+
 
 @app.route('/verify_otp', methods=['GET', 'POST'])
 def verify_otp():
@@ -134,13 +130,33 @@ def verify_otp():
         entered_otp = request.form['otp']
 
         if int(entered_otp) == session.get('otp'):
-            flash("OTP verified successfully!")
+            email = session.get('email_temp')
+            hashed = session.get('password_temp')
+
+            existing_user = User.query.filter_by(email=email).first()
+            if existing_user:
+                flash("Email already registered.")
+                return redirect(url_for('register'))
+
+            new_user = User(email=email, password=hashed)
+            db.session.add(new_user)
+            db.session.commit()
+
+            session['user_id'] = new_user.id
+            session['email'] = new_user.email
+
+            session.pop('otp', None)
+            session.pop('email_temp', None)
+            session.pop('password_temp', None)
+
+            flash("OTP verified and account created!")
             return redirect(url_for('index'))
         else:
             flash("Invalid OTP. Please try again.")
             return redirect(url_for('verify_otp'))
 
     return render_template('verify_otp.html')
+
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -283,18 +299,41 @@ def stats():
     total_habits = Habit.query.filter_by(user_id=user_id).count()
     completed_today = HabitCompletion.query.filter_by(user_id=user_id, date=today).count()
 
-    chart_data = {
+    completion_rate = round((completed_today / total_habits) * 100, 1) if total_habits else 0
+
+    pie_chart_data = {
         'labels': ['Completed Today', 'Remaining'],
         'data': [completed_today, max(total_habits - completed_today, 0)]
+    }
+
+    weekly_labels = []
+    weekly_values = []
+
+    for i in range(6, -1, -1): 
+        day = today - timedelta(days=i)
+        label = day.strftime('%a') 
+        count = HabitCompletion.query.filter_by(user_id=user_id, date=day).count()
+        weekly_labels.append(label)
+        weekly_values.append(count)
+
+    weekly_chart_data = {
+        'labels': weekly_labels,
+        'data': weekly_values
     }
 
     stats = {
         'total_habits': total_habits,
         'completed_habits': completed_today,
-        'completion_rate': round((completed_today / total_habits) * 100, 1) if total_habits else 0
+        'completion_rate': completion_rate
     }
 
-    return render_template('stats.html', stats=stats, chart_data=chart_data)
+    return render_template(
+        'stats.html',
+        stats=stats,
+        chart_data=pie_chart_data,
+        weekly_data=weekly_chart_data
+    )
+
 
 @app.route('/weekly_report')
 def weekly_report():
@@ -424,40 +463,6 @@ def rewards():
     earned_badge_ids = {ub.badge_id for ub in user.user_badges}
 
     return render_template('rewards.html', all_badges=all_badges, earned_badge_ids=earned_badge_ids)
-
-
-def check_and_award_badges(user):
-    earned_badge_ids = {ub.badge_id for ub in user.user_badges}
-    earned_badge_names = {ub.badge.name for ub in user.user_badges}
-    available_badges = Badge.query.all()
-
-    for badge in available_badges:
-        if badge.level_required and user.level >= badge.level_required and badge.id not in earned_badge_ids:
-            db.session.add(UserBadge(user_id=user.id, badge_id=badge.id))
-            flash(f"🏅 You earned a new badge: {badge.name}!")
-
-    if "First Step" not in earned_badge_names:
-        has_completed_any = HabitCompletion.query.filter_by(user_id=user.id).first()
-        if has_completed_any:
-            first_step_badge = next((b for b in available_badges if b.name == "First Step"), None)
-            if first_step_badge and first_step_badge.id not in earned_badge_ids:
-                db.session.add(UserBadge(user_id=user.id, badge_id=first_step_badge.id))
-                flash("🏅 You earned a new badge: First Step!")
-
-def xp_for_next_level(level):
-    return 100 + (level - 1) * 50
-
-
-def add_xp_and_check_level(user, amount):
-    user.xp += amount
-    leveled_up = False
-
-    while user.xp >= xp_for_next_level(user.level):
-        user.xp -= xp_for_next_level(user.level)
-        user.level += 1
-        leveled_up = True
-
-    return leveled_up
 
 def xp_for_next_level(level):
     return 100 + (level - 1) * 50
