@@ -45,15 +45,18 @@
     </div>
     
     <div class="flex flex-wrap justify-center md:justify-end gap-4 mt-6">
-        <a href="{{ url_for('edit_profile') }}" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition shadow">
-            <i class="fas fa-edit mr-1"></i> Edit Profile
-        </a>
-        <a href="{{ url_for('habits') }}" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition shadow">
-            <i class="fas fa-dumbbell mr-1"></i> View Habits
-        </a>
-        <a href="{{ url_for('weekly_report') }}" class="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition shadow">
-            <i class="fas fa-calendar-week mr-1"></i> Weekly Report
-        </a>
+   <a href="{{ url_for('edit_profile') }}" class="px-4 py-2 bg-blue-600 !text-black rounded hover:bg-blue-700 transition shadow">
+    <i class="fas fa-edit mr-1"></i> Edit Profile
+</a>
+
+<a href="{{ url_for('habits') }}" class="px-4 py-2 bg-green-600 !text-black rounded hover:bg-green-700 transition shadow">
+    <i class="fas fa-dumbbell mr-1"></i> View Habits
+</a>
+
+<a href="{{ url_for('weekly_report') }}" class="px-4 py-2 bg-purple-600 !text-black rounded hover:bg-purple-700 transition shadow">
+    <i class="fas fa-calendar-week mr-1"></i> Weekly Report
+</a>
+
     </div>
 
 </div>
