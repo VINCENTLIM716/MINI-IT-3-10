@@ -98,6 +98,10 @@ body.theme-gentle-pink .profile .badge {
     border: 1px solid #f9c5d1;
 }
 
+body.theme-gentle-pink .add-habit-btn {
+    color: black !important;
+}
+
 /*Calm blue*/
 body.theme-calm-blue {
     background: linear-gradient(to bottom right, #e3f2fd, #90caf9);
