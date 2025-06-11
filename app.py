@@ -116,17 +116,13 @@ def register():
             return redirect(url_for('register'))
 
         session['otp'] = otp
-
-        new_user = User(email=email, password=hashed)
-        db.session.add(new_user)
-        db.session.commit()
-
-        session['user_id'] = new_user.id
-        session['email'] = new_user.email
+        session['email_temp'] = email
+        session['password_temp'] = hashed
 
         return redirect(url_for('verify_otp'))
 
     return render_template('register.html')
+
 
 @app.route('/verify_otp', methods=['GET', 'POST'])
 def verify_otp():
@@ -134,13 +130,33 @@ def verify_otp():
         entered_otp = request.form['otp']
 
         if int(entered_otp) == session.get('otp'):
-            flash("OTP verified successfully!")
+            email = session.get('email_temp')
+            hashed = session.get('password_temp')
+
+            existing_user = User.query.filter_by(email=email).first()
+            if existing_user:
+                flash("Email already registered.")
+                return redirect(url_for('register'))
+
+            new_user = User(email=email, password=hashed)
+            db.session.add(new_user)
+            db.session.commit()
+
+            session['user_id'] = new_user.id
+            session['email'] = new_user.email
+
+            session.pop('otp', None)
+            session.pop('email_temp', None)
+            session.pop('password_temp', None)
+
+            flash("OTP verified and account created!")
             return redirect(url_for('index'))
         else:
             flash("Invalid OTP. Please try again.")
             return redirect(url_for('verify_otp'))
 
     return render_template('verify_otp.html')
+
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -290,13 +306,12 @@ def stats():
         'data': [completed_today, max(total_habits - completed_today, 0)]
     }
 
-    # New weekly trend line chart
     weekly_labels = []
     weekly_values = []
 
-    for i in range(6, -1, -1):  # Last 7 days
+    for i in range(6, -1, -1): 
         day = today - timedelta(days=i)
-        label = day.strftime('%a')  # e.g., Mon, Tue
+        label = day.strftime('%a') 
         count = HabitCompletion.query.filter_by(user_id=user_id, date=day).count()
         weekly_labels.append(label)
         weekly_values.append(count)
