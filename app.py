@@ -283,18 +283,42 @@ def stats():
     total_habits = Habit.query.filter_by(user_id=user_id).count()
     completed_today = HabitCompletion.query.filter_by(user_id=user_id, date=today).count()
 
-    chart_data = {
+    completion_rate = round((completed_today / total_habits) * 100, 1) if total_habits else 0
+
+    pie_chart_data = {
         'labels': ['Completed Today', 'Remaining'],
         'data': [completed_today, max(total_habits - completed_today, 0)]
+    }
+
+    # New weekly trend line chart
+    weekly_labels = []
+    weekly_values = []
+
+    for i in range(6, -1, -1):  # Last 7 days
+        day = today - timedelta(days=i)
+        label = day.strftime('%a')  # e.g., Mon, Tue
+        count = HabitCompletion.query.filter_by(user_id=user_id, date=day).count()
+        weekly_labels.append(label)
+        weekly_values.append(count)
+
+    weekly_chart_data = {
+        'labels': weekly_labels,
+        'data': weekly_values
     }
 
     stats = {
         'total_habits': total_habits,
         'completed_habits': completed_today,
-        'completion_rate': round((completed_today / total_habits) * 100, 1) if total_habits else 0
+        'completion_rate': completion_rate
     }
 
-    return render_template('stats.html', stats=stats, chart_data=chart_data)
+    return render_template(
+        'stats.html',
+        stats=stats,
+        chart_data=pie_chart_data,
+        weekly_data=weekly_chart_data
+    )
+
 
 @app.route('/weekly_report')
 def weekly_report():

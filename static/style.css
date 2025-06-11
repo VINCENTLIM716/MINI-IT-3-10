@@ -185,12 +185,13 @@ ul li {
 .stats-box {
     background: #ffffff;
     border-radius: 15px;
-    padding: 30px;
-    max-width: 400px;
-    margin: 20px auto;
+    padding: 20px;
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
     text-align: left;
+    max-width: none;
+    margin: 0;
 }
+
 
 .stats-box p {
     font-size: 1.1em;
