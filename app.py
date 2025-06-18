@@ -15,20 +15,32 @@ UPLOAD_FOLDER = 'static/avatars'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
+
+app.secret_key = os.environ.get('SECRET_KEY', 'fallback-secret')
+
+if os.environ.get("FLASK_ENV") == "production":
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL")
+else:
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
+
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {"pool_pre_ping": True}
+
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
-app.secret_key = 'secret123'
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'  
+
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = 'kerksiauer@gmail.com'  
-app.config['MAIL_PASSWORD'] = 'rhss uwam sogx zzfg'  
-app.config['MAIL_DEFAULT_SENDER'] = 'kerksiauer@gmail.com'  
+app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME')  # ✅ safer
+app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')  # ✅ safer
+app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_USERNAME')  # use same sender
+
+UPLOAD_FOLDER = 'static/avatars'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 mail = Mail(app)
+
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
