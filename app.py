@@ -8,7 +8,6 @@ import random
 import os
 from werkzeug.utils import secure_filename
 from apscheduler.schedulers.background import BackgroundScheduler
-from datetime import datetime
 from sqlalchemy import Column, DateTime
 
 scheduler = BackgroundScheduler()
@@ -641,10 +640,10 @@ def check_and_send_reminders():
 
 scheduler = BackgroundScheduler()
 scheduler.add_job(check_and_send_reminders, 'interval', minutes=1)
+scheduler.start()
 
 with app.app_context():
     db.create_all()
 
 if __name__ == '__main__':
-    scheduler.start()
     app.run(debug=True)
