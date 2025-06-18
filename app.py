@@ -617,6 +617,11 @@ def send_reminder_email(user_email, habit_name):
     except Exception as e:
         print(f"Error sending reminder email: {e}")
 
+@app.route('/send_reminders')
+def manual_send_reminders():
+    check_and_send_reminders()
+    return "Reminders checked and sent!", 200
+
 def check_and_send_reminders():
     with app.app_context():
         now = datetime.now()
