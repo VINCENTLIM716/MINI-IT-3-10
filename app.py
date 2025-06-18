@@ -6,6 +6,7 @@ from datetime import date,datetime,timedelta
 from flask_mail import Mail, Message
 import random
 import os
+import pytz
 from werkzeug.utils import secure_filename
 from apscheduler.schedulers.background import BackgroundScheduler
 from sqlalchemy import Column, DateTime
@@ -305,7 +306,8 @@ def stats():
         return redirect(url_for('login'))
 
     user_id = session['user_id']
-    today = date.today()
+    malaysia_tz = pytz.timezone('Asia/Kuala_Lumpur')
+    today = datetime.now(malaysia_tz).date()
 
     total_habits = Habit.query.filter_by(user_id=user_id).count()
     completed_today = HabitCompletion.query.filter_by(user_id=user_id, date=today).count()
@@ -616,25 +618,6 @@ def send_reminder_email(user_email, habit_name):
         print(f"Reminder sent to {user_email} for habit {habit_name}")
     except Exception as e:
         print(f"Error sending reminder email: {e}")
-
-@app.route('/seed_badges')
-def seed_badges():
-    badge_data = [
-        {"name": "Novice Adventurer", "description": "Reached Level 1", "level_required": 1},
-        {"name": "Level Up", "description": "Reached Level 2", "level_required": 2},
-        {"name": "Rising Star", "description": "Reached Level 5", "level_required": 5},
-        {"name": "Seasoned Warrior", "description": "Reached Level 15", "level_required": 15},
-        {"name": "Legendary Hero", "description": "Reached Level 30", "level_required": 30},
-    ]
-
-    for data in badge_data:
-        exists = Badge.query.filter_by(name=data["name"]).first()
-        if not exists:
-            new_badge = Badge(**data)
-            db.session.add(new_badge)
-
-    db.session.commit()
-    return "✅ All badges seeded!"
 
 def check_and_send_reminders():
     with app.app_context():
