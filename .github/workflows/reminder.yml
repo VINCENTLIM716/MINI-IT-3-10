@@ -10,4 +10,4 @@ jobs:
     steps:
       - name: Call Flask Reminder Route
         run: |
-          curl -X GET https://your-render-app.onrender.com/send_reminders
+          curl -X GET https://habit-traveler-yfj5.onrender.com
